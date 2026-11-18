@@ -7,7 +7,7 @@ A 2.5D side-scrolling platformer level built with [Vue 3](https://vuejs.org), [T
 
 **[Play it in your browser](https://hayrullah-zafer-yilmaz.github.io/sprout-hop/)** · [Türkçe](docs/README.tr.md)
 
-![Sprout Hop gameplay: the round orange hero lands after breaking a brick, a purple slime approaches, crates float overhead](docs/assets/gameplay.png)
+![Sprout Hop gameplay: the round orange hero pops a coin out of a crate, breaks a brick, stomps a purple slime, jumps over a pit and climbs stone stairs to collect coins](docs/assets/demo.gif)
 
 ## Features
 

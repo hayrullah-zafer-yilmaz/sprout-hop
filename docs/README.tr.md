@@ -7,7 +7,7 @@
 
 **[Tarayıcıda oynayın](https://hayrullah-zafer-yilmaz.github.io/sprout-hop/)** · [English](../README.md)
 
-![Sprout Hop oynanışı: yuvarlak turuncu kahraman bir tuğlayı kırıp yere iniyor, mor bir jöle yaklaşıyor, sandıklar havada duruyor](assets/gameplay.png)
+![Sprout Hop oynanışı: yuvarlak turuncu kahraman bir sandıktan altın çıkarıyor, bir tuğlayı kırıyor, mor bir jölenin üstüne basıyor, bir çukurun üstünden atlıyor ve taş merdivenleri tırmanıp altın topluyor](assets/demo.gif)
 
 ## Özellikler
 
