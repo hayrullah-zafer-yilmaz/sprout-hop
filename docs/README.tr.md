@@ -12,7 +12,7 @@
 ## Özellikler
 
 - **Seçilebilen üç kahraman**: Sprout dengelidir, Zip en hızlı koşar, Bun en yükseğe zıplar ve zıplama tuşunu basılı tuttuğunuzda süzülür. Seçtiğiniz kahraman canlı bir 3B önizlemeyle gösterilir.
-- **İki bölüm**: her birinin kendi görünümü ve kendi en iyi puanı var. Bir bölümü bitirdiğinizde bir düğmeyle sıradakine geçebilirsiniz. Kahraman ekranında da istediğiniz bölümü seçebilirsiniz.
+- **İki bölüm**: her birinin kendi görünümü ve kendi en iyi puanı var. Bir bölümü bitirdiğinizde sıradaki bölüm beş saniyelik bir geri sayımın ardından kendiliğinden başlar. Kahraman ekranında da istediğiniz bölümü seçebilirsiniz.
   - **Güneşli Çayır** yaklaşık 220 karo genişliğindedir. Çukurlar, merdivenler, tek yönlü kalaslar, dikenler, bir kontrol noktası, biri yatay biri dikey iki hareketli platform ve sonunda bir bayrak var.
   - **Sisli Şelale** yaklaşık 200 karo genişliğinde bir nehir kanyonudur. Nehrin üstünde basamak taşları, tahta bir köprü, bir asansör ve hareketli bir platform var. Arka planda üç şelale nehre dökülür; sis yükselir, dipte köpük oluşur ve bir gökkuşağı görünür.
 - **İnce ayarlı platform kontrolleri**: hızlanma ve frenleme, koşma tuşu, basılı tutma süresine göre değişen zıplama yüksekliği, "coyote time" ve zıplama tamponu.

@@ -10,11 +10,13 @@ import {
   cycleLevel,
   openHeroSelect,
   pauseIfPlaying,
+  playNextLevel,
   restart,
   startGame,
   toggleMute,
   togglePause,
   ui,
+  upcomingLevel,
   type Screen,
 } from './app/store'
 
@@ -24,6 +26,7 @@ function confirm(): void {
   if (ui.screen === 'title') openHeroSelect()
   else if (ui.screen === 'select') startGame()
   else if (ui.screen === 'paused') togglePause()
+  else if (ui.screen === 'complete' && upcomingLevel.value) playNextLevel()
   else if (ui.screen === 'gameover' || ui.screen === 'complete') restart()
 }
 

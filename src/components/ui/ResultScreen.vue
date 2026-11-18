@@ -1,17 +1,33 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { formatScore } from '../../app/format'
-import { best, changeHero, playNextLevel, restart, t, ui, upcomingLevel } from '../../app/store'
+import { best, changeHero, levelName, playNextLevel, restart, t, ui, upcomingLevel } from '../../app/store'
 import { vAutofocus } from './autofocus'
+import { useCountdown } from './countdown'
+
+const NEXT_LEVEL_DELAY = 5
 
 const props = defineProps<{ outcome: 'gameover' | 'complete' }>()
 
 const advance = computed(() => props.outcome === 'complete' && upcomingLevel.value !== null)
+const nextButton = ref<HTMLButtonElement>()
+const { progress, running, stop } = useCountdown(NEXT_LEVEL_DELAY, advance.value, playNextLevel)
 
 const copy = computed(() => {
   if (props.outcome === 'gameover') return { title: t.value.gameOver, text: t.value.gameOverText }
-  return { title: t.value.complete, text: advance.value ? t.value.completeText : t.value.finalText }
+  return { title: t.value.complete, text: advance.value ? t.value.completeText(levelName.value) : t.value.finalText }
 })
+
+const notice = computed(() => {
+  const next = upcomingLevel.value
+  if (!next) return ''
+  const seconds = Math.max(1, Math.ceil(NEXT_LEVEL_DELAY * (1 - progress.value)))
+  return t.value.startsIn(t.value.levelNames[next], seconds)
+})
+
+function keepChoice(event: FocusEvent): void {
+  if (event.target !== nextButton.value) stop()
+}
 
 const stats = computed(() => {
   const score = { label: t.value.score, value: formatScore(ui.score) }
@@ -23,7 +39,7 @@ const stats = computed(() => {
 </script>
 
 <template>
-  <section class="panel" aria-labelledby="result-title">
+  <section class="panel" :class="{ 'panel-wide': advance }" aria-labelledby="result-title">
     <span v-if="outcome === 'complete' && ui.newBest" class="badge">{{ t.newBest }}</span>
     <h1 id="result-title">{{ copy.title }}</h1>
     <p class="lead">{{ copy.text }}</p>
@@ -33,8 +49,19 @@ const stats = computed(() => {
         <dd>{{ stat.value }}</dd>
       </div>
     </dl>
-    <div class="actions">
-      <button v-if="advance" v-autofocus class="button button-primary" type="button" @click="playNextLevel">{{ t.nextLevel }}</button>
+    <p v-if="advance" class="notice" :class="{ 'notice-off': !running }">{{ notice }}</p>
+    <div class="actions" @focusin="keepChoice">
+      <button
+        v-if="advance"
+        ref="nextButton"
+        v-autofocus
+        class="button button-primary button-next"
+        :style="{ '--progress': running ? progress : 0 }"
+        type="button"
+        @click="playNextLevel"
+      >
+        {{ t.nextLevel }}
+      </button>
       <button v-autofocus="!advance" class="button" :class="advance ? 'button-ghost' : 'button-primary'" type="button" @click="restart">
         {{ outcome === 'gameover' ? t.tryAgain : t.playAgain }}
       </button>
@@ -75,6 +102,37 @@ const stats = computed(() => {
   font-size: 20px;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
+}
+
+.notice {
+  margin: 18px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.notice-off {
+  visibility: hidden;
+}
+
+.notice + .actions {
+  margin-top: 12px;
+}
+
+.button-next {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.button-next::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: rgba(255, 255, 255, 0.24);
+  transform: scaleX(var(--progress, 0));
+  transform-origin: left center;
 }
 
 .badge {

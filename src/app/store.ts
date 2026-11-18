@@ -67,7 +67,9 @@ export const t = computed(() => messages[ui.locale])
 
 export const best = computed(() => ui.bests[ui.level])
 
-export const levelTitle = computed(() => `${t.value.levelWord} ${levelNumber(ui.level)} · ${t.value.levelNames[ui.level]}`)
+export const levelName = computed(() => t.value.levelNames[ui.level])
+
+export const levelTitle = computed(() => `${t.value.levelWord} ${levelNumber(ui.level)} · ${levelName.value}`)
 
 export const upcomingLevel = computed(() => nextLevel(ui.level))
 

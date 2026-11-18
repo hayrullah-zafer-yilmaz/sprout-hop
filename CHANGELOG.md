@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.1 (2026-11-18)
+
+- After a cleared level, the next level now starts on its own after a five-second countdown. Moving to another button on the result screen cancels the countdown, and it waits while the window is in the background.
+- Enter and the gamepad A button on the result screen now start the next level. Before, they could replay the cleared level instead.
+- The pause and result texts name the current level instead of always mentioning the meadow.
+- The result screen is wider when it shows three buttons, so they fit on one row.
+
 ## 0.3.0 (2026-11-18)
 
 - A second level, Misty Falls: a river canyon about 200 tiles wide with stepping stones, a wooden bridge, a lift and a moving platform over the river.
