@@ -13,7 +13,9 @@ interface Note {
 
 const NOTE = (semitones: number) => 440 * 2 ** ((semitones - 9) / 12)
 
-const SOUNDS: Partial<Record<GameEvent | 'pause' | 'start', Note[]>> = {
+type SoundName = GameEvent | 'pause' | 'start' | 'select'
+
+const SOUNDS: Partial<Record<SoundName, Note[]>> = {
   jump: [{ wave: 'square', from: 280, to: 620, start: 0, duration: 0.14, volume: 0.09 }],
   coin: [
     { wave: 'triangle', from: NOTE(24), start: 0, duration: 0.06, volume: 0.22 },
@@ -58,6 +60,10 @@ const SOUNDS: Partial<Record<GameEvent | 'pause' | 'start', Note[]>> = {
     volume: 0.2,
   })),
   pause: [{ wave: 'sine', from: 880, start: 0, duration: 0.06, volume: 0.12 }],
+  select: [
+    { wave: 'triangle', from: NOTE(14), start: 0, duration: 0.05, volume: 0.16 },
+    { wave: 'triangle', from: NOTE(21), start: 0.05, duration: 0.09, volume: 0.16 },
+  ],
   start: [
     { wave: 'triangle', from: NOTE(12), start: 0, duration: 0.08, volume: 0.18 },
     { wave: 'triangle', from: NOTE(19), start: 0.08, duration: 0.16, volume: 0.18 },
@@ -86,7 +92,7 @@ export class SoundBoard {
     if (this.master && this.context) this.master.gain.setTargetAtTime(muted ? 0 : 0.8, this.context.currentTime, 0.02)
   }
 
-  play(name: GameEvent | 'pause' | 'start'): void {
+  play(name: SoundName): void {
     if (name === 'break') {
       this.noise()
       return

@@ -4,26 +4,49 @@ import GameCanvas from './components/scene/GameCanvas.vue'
 import GameHud from './components/ui/GameHud.vue'
 import GameOverlay from './components/ui/GameOverlay.vue'
 import { input, type Action } from './app/input'
-import { pauseIfPlaying, restart, startGame, toggleMute, togglePause, ui } from './app/store'
+import {
+  backToTitle,
+  cycleHero,
+  openHeroSelect,
+  pauseIfPlaying,
+  restart,
+  startGame,
+  toggleMute,
+  togglePause,
+  ui,
+  type Screen,
+} from './app/store'
+
+const IN_RUN: Screen[] = ['playing', 'paused', 'gameover', 'complete']
+
+function confirm(): void {
+  if (ui.screen === 'title') openHeroSelect()
+  else if (ui.screen === 'select') startGame()
+  else if (ui.screen === 'paused') togglePause()
+  else if (ui.screen === 'gameover' || ui.screen === 'complete') restart()
+}
 
 function handle(action: Action): void {
   switch (action) {
     case 'confirm':
-      if (ui.screen === 'title') startGame()
-      else if (ui.screen === 'paused') togglePause()
-      else if (ui.screen === 'gameover' || ui.screen === 'complete') restart()
+      confirm()
       break
     case 'pause':
-      togglePause()
+      if (ui.screen === 'select') backToTitle()
+      else togglePause()
       break
     case 'blur':
       pauseIfPlaying()
       break
     case 'restart':
-      if (ui.screen !== 'title') restart()
+      if (IN_RUN.includes(ui.screen)) restart()
       break
     case 'mute':
       toggleMute()
+      break
+    case 'left':
+    case 'right':
+      if (ui.screen === 'select') cycleHero(action === 'left' ? -1 : 1)
       break
   }
 }
@@ -46,7 +69,7 @@ onBeforeUnmount(() => {
 <template>
   <main class="stage">
     <GameCanvas />
-    <GameHud v-if="ui.screen !== 'title'" />
+    <GameHud v-if="IN_RUN.includes(ui.screen)" />
     <GameOverlay />
   </main>
 </template>

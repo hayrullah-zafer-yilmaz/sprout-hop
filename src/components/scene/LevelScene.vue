@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { markRaw, onBeforeUnmount, provide } from 'vue'
+import { markRaw, onBeforeUnmount, provide, watch } from 'vue'
 import { useLoop } from '@tresjs/core'
 import type { GameEvent } from '../../game/entities'
 import type { LevelData } from '../../game/level'
@@ -23,8 +23,12 @@ const MAX_STEP = 1 / 120
 
 const props = defineProps<{ level: LevelData }>()
 
-const world = markRaw(new World(props.level))
+const world = markRaw(new World(props.level, { character: ui.character }))
 provide(WORLD_KEY, world)
+watch(
+  () => ui.character,
+  (character) => world.setCharacter(character),
+)
 ui.totalCoins = world.totalCoins
 if (import.meta.env.DEV) Object.assign(window, { sproutHop: world })
 

@@ -35,6 +35,18 @@ const en = {
   soundOff: 'Sound off',
   language: 'Language',
   builtWith: 'Built with Vue 3, TresJS and Three.js',
+  chooseHero: 'Choose your hero',
+  chooseHint: 'Use ← → to choose and Enter to start.',
+  start: 'Start',
+  back: 'Back',
+  changeHero: 'Change hero',
+  speed: 'Speed',
+  jumpPower: 'Jump',
+  heroes: {
+    sprout: { trait: 'Balanced', description: 'Runs and jumps evenly. A good first pick.' },
+    zip: { trait: 'Fast', description: 'Runs faster than anyone else, but jumps a little lower.' },
+    bun: { trait: 'Floaty', description: 'Jumps the highest and glides down slowly while you hold jump.' },
+  },
 }
 
 export type Messages = typeof en
@@ -75,6 +87,18 @@ const tr: Messages = {
   soundOff: 'Ses kapalı',
   language: 'Dil',
   builtWith: 'Vue 3, TresJS ve Three.js ile yapıldı',
+  chooseHero: 'Kahramanınızı seçin',
+  chooseHint: 'Seçmek için ← → tuşlarını, başlamak için Enter tuşunu kullanın.',
+  start: 'Başla',
+  back: 'Geri',
+  changeHero: 'Kahraman değiştir',
+  speed: 'Hız',
+  jumpPower: 'Zıplama',
+  heroes: {
+    sprout: { trait: 'Dengeli', description: 'Koşusu ve zıplaması dengelidir. İlk oyun için iyi bir seçimdir.' },
+    zip: { trait: 'Hızlı', description: 'Herkesten hızlı koşar ama biraz daha alçaktan zıplar.' },
+    bun: { trait: 'Süzülen', description: 'En yükseğe zıplar; zıplama tuşunu basılı tuttuğunuz sürece yavaşça süzülerek iner.' },
+  },
 }
 
 export const messages: Record<Locale, Messages> = { en, tr }

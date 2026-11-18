@@ -1,3 +1,4 @@
+import { CHARACTERS, type CharacterId, type Moveset } from './characters'
 import { EFFECTS, PHYSICS, RULES } from './config'
 import { ONE_WAY_TOLERANCE, moveX, moveY, overlaps, type Box, type Point, type TileLookup } from './collision'
 import {
@@ -34,6 +35,11 @@ const DEBRIS_PIECES = [
   { x: 0.75, y: 0.25, vx: 2.4, vy: 8 },
 ]
 
+export interface WorldOptions {
+  character?: CharacterId
+  lives?: number
+}
+
 function approach(value: number, target: number, step: number): number {
   return value < target ? Math.min(value + step, target) : Math.max(value - step, target)
 }
@@ -64,6 +70,7 @@ export class World {
   readonly totalCoins: number
 
   phase: Phase = 'playing'
+  character: CharacterId = 'sprout'
   clock = 0
   score = 0
   coinsCollected = 0
@@ -71,15 +78,17 @@ export class World {
   time = RULES.levelTime
   respawn: Point
 
+  private moves: Moveset = CHARACTERS.sprout.moves
   private tallyCarry = 0
   private readonly listeners = new Set<(event: GameEvent) => void>()
   private readonly lookup: TileLookup = (x, y) => this.tileAt(x, y)
 
-  constructor(level: LevelData, lives: number = RULES.startLives) {
+  constructor(level: LevelData, { character = 'sprout', lives = RULES.startLives }: WorldOptions = {}) {
     this.width = level.width
     this.height = level.height
     this.tiles = level.tiles.slice()
     this.lives = lives
+    this.setCharacter(character)
     this.respawn = standingSpot(level.start)
     this.player = createPlayer(this.respawn)
     this.enemies = level.enemies.map(createEnemy)
@@ -94,6 +103,11 @@ export class World {
   on(listener: (event: GameEvent) => void): () => void {
     this.listeners.add(listener)
     return () => this.listeners.delete(listener)
+  }
+
+  setCharacter(character: CharacterId): void {
+    this.character = character
+    this.moves = CHARACTERS[character].moves
   }
 
   tileAt(x: number, y: number): TileId {
@@ -166,8 +180,7 @@ export class World {
     this.rideMover(p)
     this.steer(p, input, dt)
     this.jumpIfRequested(p, input, dt)
-    const gravity = p.vy > 0 ? (input.jump ? PHYSICS.gravityUp : PHYSICS.gravityCut) : PHYSICS.gravityDown
-    fall(p, gravity, dt)
+    this.applyGravity(p, input.jump, dt)
     moveX(this.lookup, p, p.vx * dt)
     const ceiling = this.movePlayerVertically(p, dt)
 
@@ -187,9 +200,9 @@ export class World {
   }
 
   private steer(p: Player, input: InputState, dt: number): void {
-    const maxSpeed = input.run ? PHYSICS.runSpeed : PHYSICS.walkSpeed
+    const maxSpeed = input.run ? this.moves.runSpeed : this.moves.walkSpeed
     const turning = input.axis !== 0 && p.vx !== 0 && Math.sign(input.axis) !== Math.sign(p.vx)
-    let accel = !p.onGround ? PHYSICS.airAccel : input.axis === 0 ? PHYSICS.groundDecel : PHYSICS.groundAccel
+    let accel = !p.onGround ? PHYSICS.airAccel : input.axis === 0 ? PHYSICS.groundDecel : this.moves.acceleration
     if (turning) accel *= PHYSICS.turnMultiplier
     p.vx = approach(p.vx, input.axis * maxSpeed, accel * dt)
     if (input.axis !== 0) p.facing = input.axis > 0 ? 1 : -1
@@ -199,13 +212,23 @@ export class World {
     p.coyote = p.onGround ? PHYSICS.coyoteTime : Math.max(0, p.coyote - dt)
     p.jumpBuffer = input.jumpPressed ? PHYSICS.jumpBuffer : Math.max(0, p.jumpBuffer - dt)
     if (p.jumpBuffer <= 0 || p.coyote <= 0) return
-    const running = Math.abs(p.vx) > PHYSICS.walkSpeed + 0.5
-    p.vy = PHYSICS.jumpVelocity + (running ? PHYSICS.runJumpBonus : 0)
+    const running = Math.abs(p.vx) > this.moves.walkSpeed + 0.5
+    p.vy = this.moves.jumpVelocity + (running ? PHYSICS.runJumpBonus : 0)
     p.onGround = false
     p.platform = null
     p.coyote = 0
     p.jumpBuffer = 0
     this.emit('jump')
+  }
+
+  private applyGravity(p: Player, holdingJump: boolean, dt: number): void {
+    const rising = p.vy > 0
+    const gravity = rising ? (holdingJump ? PHYSICS.gravityUp : PHYSICS.gravityCut) : this.moves.fallGravity
+    fall(p, gravity, dt)
+    const glideSpeed = this.moves.glideSpeed
+    const gliding = glideSpeed !== null && holdingJump && !rising && !p.onGround
+    if (gliding) p.vy = Math.max(p.vy, -glideSpeed)
+    p.gliding = gliding
   }
 
   private movePlayerVertically(p: Player, dt: number): Point | null {

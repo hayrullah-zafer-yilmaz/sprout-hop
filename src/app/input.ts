@@ -1,6 +1,6 @@
 import type { InputState } from '../game/entities'
 
-export type Action = 'confirm' | 'pause' | 'restart' | 'mute' | 'blur'
+export type Action = 'confirm' | 'pause' | 'restart' | 'mute' | 'blur' | 'left' | 'right'
 
 const KEYS = {
   left: ['ArrowLeft', 'KeyA'],
@@ -18,6 +18,10 @@ const ACTION_KEYS: Record<string, Action> = {
   KeyP: 'pause',
   KeyR: 'restart',
   KeyM: 'mute',
+  ArrowLeft: 'left',
+  KeyA: 'left',
+  ArrowRight: 'right',
+  KeyD: 'right',
 }
 
 const PAD_BUTTONS = { jump: 0, runA: 2, runB: 1, start: 9, left: 14, right: 15 }
@@ -101,6 +105,7 @@ export class InputController {
     const previous = this.pad
     this.pad = readGamepad()
     if (this.pad.start && !previous.start) this.dispatch('pause')
+    if (this.pad.axis !== 0 && this.pad.axis !== previous.axis) this.dispatch(this.pad.axis < 0 ? 'left' : 'right')
     if (this.pad.jump && !previous.jump) {
       this.jumpQueued = true
       this.dispatch('confirm')

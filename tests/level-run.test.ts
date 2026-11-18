@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { CHARACTER_IDS } from '../src/game/characters'
 import { isSolid } from '../src/game/collision'
 import type { InputState } from '../src/game/entities'
 import { LEVEL_ONE, Tile, parseLevel } from '../src/game/level'
@@ -39,9 +40,16 @@ function decide(world: World, held: { jump: number }): InputState {
     const wall = isSolid(world.tileAt(Math.floor(front + 0.3), Math.floor(feet + 0.1)))
     const gapStart = Math.floor(front + 0.2)
     const gap = groundAhead(world, front + 0.6, feet) ? 0 : gapWidth(world, gapStart, feet)
-    const enemy = world.enemies.find(
-      (item) => item.alive && item.x > p.x && item.x - front < (item.kind === 'spiky' ? 2.4 : 1.6) && Math.abs(item.y - feet) < 1.5,
-    )
+    const reaction = Math.max(1, Math.abs(p.vx) / 6.5)
+    const nearest = world.enemies
+      .filter((item) => item.alive && item.x > p.x && Math.abs(item.y - feet) < 1.5)
+      .reduce<{ gap: number; reach: number } | null>((best, item) => {
+        const gap = item.x - front
+        const reach = (item.kind === 'spiky' ? 2.4 : 1.6) * reaction
+        return best && best.gap <= gap ? best : { gap, reach }
+      }, null)
+    const tooClose = nearest !== null && nearest.gap < 0.9
+    const enemy = nearest !== null && nearest.gap < nearest.reach
     const spikes = world.spikes.some((spike) => spike.x > p.x && spike.x - front < 1.2 && Math.abs(spike.y - feet) < 0.5)
 
     if (gap > 6) {
@@ -53,6 +61,8 @@ function decide(world: World, held: { jump: number }): InputState {
         jump = true
         held.jump = 0.35
       }
+    } else if (tooClose) {
+      axis = -1
     } else if (wall || gap > 0 || enemy || spikes) {
       jump = true
       held.jump = 0.5
@@ -66,8 +76,8 @@ function decide(world: World, held: { jump: number }): InputState {
 }
 
 describe('level one', () => {
-  it('can be finished by a simple bot that only runs right and jumps', () => {
-    const world = new World(parseLevel(LEVEL_ONE))
+  it.each(CHARACTER_IDS)('can be finished by a simple bot playing %s', (character) => {
+    const world = new World(parseLevel(LEVEL_ONE), { character })
     const held = { jump: 0 }
     let wasJumping = false
     let seconds = 0

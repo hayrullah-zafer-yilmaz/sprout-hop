@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { formatScore } from '../../app/format'
-import { restart, t, ui } from '../../app/store'
+import { changeHero, restart, t, ui } from '../../app/store'
 import { vAutofocus } from './autofocus'
 
 const props = defineProps<{ outcome: 'gameover' | 'complete' }>()
@@ -34,6 +34,7 @@ const stats = computed(() => {
     </dl>
     <div class="actions">
       <button v-autofocus class="button button-primary" type="button" @click="restart">{{ copy.action }}</button>
+      <button class="button button-ghost" type="button" @click="changeHero">{{ t.changeHero }}</button>
     </div>
   </section>
 </template>

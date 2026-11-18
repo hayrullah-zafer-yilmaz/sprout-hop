@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { formatScore } from '../../app/format'
 import { t, togglePause, toggleMute, ui } from '../../app/store'
+import CharacterPortrait from './CharacterPortrait.vue'
 
 const score = computed(() => formatScore(ui.score))
 const lowTime = computed(() => ui.time <= 60 && ui.screen === 'playing')
@@ -22,12 +23,7 @@ const lowTime = computed(() => ui.time <= 60 && ui.screen === 'playing')
         <span class="value">{{ ui.coins }}<span class="dim"> / {{ ui.totalCoins }}</span></span>
       </div>
       <div class="stat" :aria-label="t.lives">
-        <svg viewBox="0 0 24 24" class="icon" aria-hidden="true">
-          <path
-            d="M12 20.5 4.6 13.4A4.9 4.9 0 0 1 12 6.9a4.9 4.9 0 0 1 7.4 6.5Z"
-            fill="#ff5d73"
-          />
-        </svg>
+        <CharacterPortrait :character="ui.character" class="icon icon-hero" />
         <span class="value">× {{ ui.lives }}</span>
       </div>
       <div class="stat" :class="{ warn: lowTime }" :aria-label="t.time">
@@ -121,6 +117,11 @@ const lowTime = computed(() => ui.time <= 60 && ui.screen === 'playing')
   width: 20px;
   height: 20px;
   flex: none;
+}
+
+.icon-hero {
+  width: 24px;
+  height: 24px;
 }
 
 .warn {

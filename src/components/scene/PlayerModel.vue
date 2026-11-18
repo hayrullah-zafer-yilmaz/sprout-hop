@@ -1,16 +1,22 @@
 <script setup lang="ts">
-import { shallowRef, type ShallowRef } from 'vue'
+import { computed, shallowRef, watch, type ShallowRef } from 'vue'
 import { useLoop } from '@tresjs/core'
 import type { Group, Mesh } from 'three'
 import type { Player } from '../../game/entities'
+import { ui } from '../../app/store'
+import { HERO, HERO_LOOKS, strideOf } from '../../scene/hero'
 import { PRIORITY, useWorld } from '../../scene/context'
+import SproutGear from './heroes/SproutGear.vue'
+import ZipGear from './heroes/ZipGear.vue'
+import BunGear from './heroes/BunGear.vue'
 
-const RADIUS = 0.42
-const CENTER = 0.5
+const { radius: RADIUS, center: CENTER } = HERO
 const TURN_ANGLE = 0.7
 const TURN_RATE = 12
 const LANDING_TIME = 0.18
 const BLINK_PERIOD = 3.4
+const CHEER_TIME = 0.45
+const CHEER_HEIGHT = 0.4
 
 interface Limb {
   mesh: ShallowRef<Mesh | undefined>
@@ -22,8 +28,6 @@ const world = useWorld()
 const root = shallowRef<Group>()
 const body = shallowRef<Group>()
 const eyes = shallowRef<Group>()
-const sprout = shallowRef<Group>()
-const scarfTail = shallowRef<Group>()
 const leftArm = shallowRef<Mesh>()
 const rightArm = shallowRef<Mesh>()
 const leftFoot = shallowRef<Mesh>()
@@ -38,7 +42,15 @@ const arms: Limb[] = [
   { mesh: rightArm, phase: 0, side: 1 },
 ]
 
-const pose = { turn: 0.6, stride: 0, step: 0, spin: 0 }
+const pose = { turn: 0.6, stride: 0, step: 0, spin: 0, cheer: 0 }
+const look = computed(() => HERO_LOOKS[ui.character])
+
+watch(
+  () => ui.character,
+  () => {
+    pose.cheer = CHEER_TIME
+  },
+)
 
 function animateFeet(p: Player, swingX: number, swingZ: number): void {
   for (const { mesh, phase, side } of feet) {
@@ -69,7 +81,7 @@ function animateArms(p: Player, swingX: number, swingZ: number): void {
   }
 }
 
-function squashAndStretch(torso: Group, p: Player, elapsed: number, celebrating: boolean): void {
+function squashAndStretch(torso: Group, p: Player, elapsed: number, dt: number, celebrating: boolean): void {
   let sx = 1
   let sy = 1
   const sinceLanding = world.clock - p.landedAt
@@ -89,14 +101,13 @@ function squashAndStretch(torso: Group, p: Player, elapsed: number, celebrating:
   torso.scale.set(sx, sy, sx)
   const bob = p.onGround ? Math.abs(Math.sin(pose.step)) * 0.06 * pose.stride : 0
   torso.position.y = celebrating && p.onGround ? Math.abs(Math.sin(elapsed * 7)) * 0.3 : bob
+  if (pose.cheer > 0) {
+    pose.cheer = Math.max(0, pose.cheer - dt)
+    torso.position.y += Math.sin((1 - pose.cheer / CHEER_TIME) * Math.PI) * CHEER_HEIGHT
+  }
 }
 
-function animateDetails(p: Player, elapsed: number): void {
-  if (sprout.value) sprout.value.rotation.z = Math.sin(elapsed * 4) * 0.14 - p.vx * 0.03
-  if (scarfTail.value) {
-    const flutter = Math.sin(elapsed * 14) * 0.15 * (0.3 + pose.stride)
-    scarfTail.value.rotation.x = 0.5 + pose.stride * 0.7 + (p.onGround ? 0 : 0.4) + flutter
-  }
+function blink(elapsed: number): void {
   if (eyes.value) eyes.value.scale.y = elapsed % BLINK_PERIOD < 0.12 ? 0.12 : 1
 }
 
@@ -118,20 +129,21 @@ onBeforeRender(({ delta, elapsed }) => {
   pose.spin = 0
 
   const celebrating = world.phase === 'won' || world.phase === 'complete'
-  const targetTurn = celebrating && p.onGround ? 0 : p.facing * TURN_ANGLE
+  const facingCamera = (celebrating && p.onGround) || ui.screen === 'select'
+  const targetTurn = facingCamera ? 0 : p.facing * TURN_ANGLE
   pose.turn += (targetTurn - pose.turn) * (1 - Math.exp(-dt * TURN_RATE))
   node.rotation.set(0, pose.turn, 0)
 
   const speed = Math.abs(p.vx)
-  pose.stride = Math.min(speed / 6, 1)
+  pose.stride = strideOf(p.vx)
   if (p.onGround && speed > 0.2) pose.step += dt * (7 + speed * 1.6)
   const swingX = Math.cos(pose.turn) * p.facing
   const swingZ = Math.sin(pose.turn) * p.facing
 
   animateFeet(p, swingX, swingZ)
   animateArms(p, swingX, swingZ)
-  squashAndStretch(torso, p, elapsed, celebrating)
-  animateDetails(p, elapsed)
+  squashAndStretch(torso, p, elapsed, dt, celebrating)
+  blink(elapsed)
 }, PRIORITY.models)
 </script>
 
@@ -140,7 +152,7 @@ onBeforeRender(({ delta, elapsed }) => {
     <TresGroup ref="body">
       <TresMesh :position="[0, CENTER, 0]" cast-shadow>
         <TresSphereGeometry :args="[RADIUS, 40, 28]" />
-        <TresMeshStandardMaterial color="#ffa046" :roughness="0.45" />
+        <TresMeshStandardMaterial :color="look.body" :roughness="0.45" />
       </TresMesh>
 
       <TresGroup ref="eyes" :position="[0, CENTER + 0.05, 0]">
@@ -167,53 +179,27 @@ onBeforeRender(({ delta, elapsed }) => {
         <TresMeshBasicMaterial color="#6b2a12" />
       </TresMesh>
 
-      <TresMesh :position="[0, CENTER - 0.25, 0]" :rotation="[Math.PI / 2, 0, 0]" cast-shadow>
-        <TresTorusGeometry :args="[0.336, 0.036, 8, 36]" />
-        <TresMeshStandardMaterial color="#2f6fde" :roughness="0.55" />
-      </TresMesh>
-      <TresGroup ref="scarfTail" :position="[0.1, CENTER - 0.25, -0.34]">
-        <TresMesh :position="[0, -0.1, 0]" :rotation="[0, 0, -0.25]">
-          <TresBoxGeometry :args="[0.09, 0.2, 0.04]" />
-          <TresMeshStandardMaterial color="#2f6fde" :roughness="0.55" />
-        </TresMesh>
-        <TresMesh :position="[0.06, -0.08, 0.01]" :rotation="[0, 0, 0.3]">
-          <TresBoxGeometry :args="[0.08, 0.16, 0.04]" />
-          <TresMeshStandardMaterial color="#2a62c8" :roughness="0.55" />
-        </TresMesh>
-      </TresGroup>
-
       <TresMesh ref="leftArm" :position="[-0.43, CENTER - 0.06, 0.02]" :scale="[0.8, 1, 0.8]" cast-shadow>
         <TresSphereGeometry :args="[0.1, 16, 12]" />
-        <TresMeshStandardMaterial color="#f58a2c" :roughness="0.55" />
+        <TresMeshStandardMaterial :color="look.limbs" :roughness="0.55" />
       </TresMesh>
       <TresMesh ref="rightArm" :position="[0.43, CENTER - 0.06, 0.02]" :scale="[0.8, 1, 0.8]" cast-shadow>
         <TresSphereGeometry :args="[0.1, 16, 12]" />
-        <TresMeshStandardMaterial color="#f58a2c" :roughness="0.55" />
+        <TresMeshStandardMaterial :color="look.limbs" :roughness="0.55" />
       </TresMesh>
 
-      <TresGroup ref="sprout" :position="[0, CENTER + RADIUS - 0.03, 0]">
-        <TresMesh :position="[0, 0.06, 0]">
-          <TresCylinderGeometry :args="[0.018, 0.026, 0.13, 6]" />
-          <TresMeshStandardMaterial color="#2f9e44" />
-        </TresMesh>
-        <TresMesh :position="[-0.1, 0.14, 0]" :rotation="[0, 0, 0.45]" :scale="[1.7, 0.5, 0.85]">
-          <TresSphereGeometry :args="[0.085, 12, 8]" />
-          <TresMeshStandardMaterial color="#51cf66" :roughness="0.5" />
-        </TresMesh>
-        <TresMesh :position="[0.1, 0.16, 0]" :rotation="[0, 0, -0.45]" :scale="[1.7, 0.5, 0.85]">
-          <TresSphereGeometry :args="[0.085, 12, 8]" />
-          <TresMeshStandardMaterial color="#51cf66" :roughness="0.5" />
-        </TresMesh>
-      </TresGroup>
+      <SproutGear v-if="ui.character === 'sprout'" />
+      <ZipGear v-else-if="ui.character === 'zip'" />
+      <BunGear v-else />
     </TresGroup>
 
     <TresMesh ref="leftFoot" :position="[-0.17, 0.06, 0.03]" :scale="[1, 0.62, 1.35]" cast-shadow>
       <TresSphereGeometry :args="[0.12, 16, 12]" />
-      <TresMeshStandardMaterial color="#6b3f22" :roughness="0.7" />
+      <TresMeshStandardMaterial :color="look.feet" :roughness="0.7" />
     </TresMesh>
     <TresMesh ref="rightFoot" :position="[0.17, 0.06, 0.03]" :scale="[1, 0.62, 1.35]" cast-shadow>
       <TresSphereGeometry :args="[0.12, 16, 12]" />
-      <TresMeshStandardMaterial color="#6b3f22" :roughness="0.7" />
+      <TresMeshStandardMaterial :color="look.feet" :roughness="0.7" />
     </TresMesh>
   </TresGroup>
 </template>

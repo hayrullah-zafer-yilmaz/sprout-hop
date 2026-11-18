@@ -2,8 +2,8 @@
 import { computed } from 'vue'
 import { formatScore } from '../../app/format'
 import type { Locale } from '../../app/i18n'
-import { setLocale, startGame, t, toggleMute, ui } from '../../app/store'
-import BrandMark from './BrandMark.vue'
+import { openHeroSelect, setLocale, t, toggleMute, ui } from '../../app/store'
+import CharacterPortrait from './CharacterPortrait.vue'
 import { vAutofocus } from './autofocus'
 
 const LOCALES: { id: Locale; label: string }[] = [
@@ -26,7 +26,7 @@ const controls = computed(() => [
 <template>
   <section class="panel panel-wide" aria-labelledby="title">
     <div class="brand">
-      <BrandMark class="mark" />
+      <CharacterPortrait character="sprout" class="mark" />
       <div>
         <h1 id="title">Sprout Hop</h1>
         <p class="lead">{{ t.tagline }}</p>
@@ -38,7 +38,7 @@ const controls = computed(() => [
         <span class="eyebrow">{{ t.level }}</span>
         <p class="hint">{{ t.startHint }}</p>
       </div>
-      <button v-autofocus class="button button-primary" type="button" @click="startGame">
+      <button v-autofocus class="button button-primary" type="button" @click="openHeroSelect">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7Z" fill="currentColor" /></svg>
         {{ t.play }}
       </button>

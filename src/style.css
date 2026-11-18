@@ -67,6 +67,7 @@ canvas {
 
 .actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
   margin-top: 22px;
 }
@@ -81,6 +82,7 @@ canvas {
   border: 1px solid transparent;
   border-radius: 6px;
   font: 600 14px/1 var(--font);
+  white-space: nowrap;
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s, color 0.15s;
 }

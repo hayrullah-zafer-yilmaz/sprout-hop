@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { PHYSICS, RULES } from '../src/game/config'
+import { CHARACTERS, type CharacterId } from '../src/game/characters'
+import { RULES } from '../src/game/config'
 import { NO_INPUT, type GameEvent, type InputState } from '../src/game/entities'
 import { LEVEL_ONE, Tile, parseLevel } from '../src/game/level'
 import { World } from '../src/game/world'
@@ -17,8 +18,20 @@ function run(world: World, seconds: number, state: InputState = NO_INPUT): void 
   }
 }
 
-function level(rows: string[]): World {
-  return new World(parseLevel(rows))
+function level(rows: string[], character: CharacterId = 'sprout'): World {
+  return new World(parseLevel(rows), { character })
+}
+
+function jumpPeak(world: World): number {
+  run(world, 0.2)
+  const start = world.player.y
+  let peak = start
+  world.step(STEP, input({ jump: true, jumpPressed: true }))
+  for (let i = 0; i < 120; i++) {
+    world.step(STEP, input({ jump: true }))
+    peak = Math.max(peak, world.player.y)
+  }
+  return peak - start
 }
 
 function events(world: World): GameEvent[] {
@@ -77,8 +90,8 @@ describe('player movement', () => {
     run(runner, 0.2)
     run(walker, 1, input({ axis: 1 }))
     run(runner, 1, input({ axis: 1, run: true }))
-    expect(walker.player.vx).toBeCloseTo(PHYSICS.walkSpeed, 5)
-    expect(runner.player.vx).toBeCloseTo(PHYSICS.runSpeed, 5)
+    expect(walker.player.vx).toBeCloseTo(CHARACTERS.sprout.moves.walkSpeed, 5)
+    expect(runner.player.vx).toBeCloseTo(CHARACTERS.sprout.moves.runSpeed, 5)
     expect(runner.player.x).toBeGreaterThan(walker.player.x + 2)
   })
 
@@ -121,6 +134,55 @@ describe('player movement', () => {
     run(world, 1.5, input({ jump: true }))
     expect(world.player.onGround).toBe(true)
     expect(world.player.y).toBeCloseTo(6, 5)
+  })
+})
+
+describe('characters', () => {
+  const flat = ['', '', '', '', '', '', '', '', '', '', '', 'P                            F', '##############################', '##############################']
+
+  it('gives Zip the fastest run and Bun the slowest', () => {
+    const speedAfterASecond = (character: CharacterId) => {
+      const world = level(flat, character)
+      run(world, 0.2)
+      run(world, 1, input({ axis: 1, run: true }))
+      return world.player.vx
+    }
+    expect(speedAfterASecond('zip')).toBeCloseTo(CHARACTERS.zip.moves.runSpeed, 5)
+    expect(speedAfterASecond('zip')).toBeGreaterThan(speedAfterASecond('sprout'))
+    expect(speedAfterASecond('sprout')).toBeGreaterThan(speedAfterASecond('bun'))
+  })
+
+  it('lets Bun jump the highest while every hero clears four tiles', () => {
+    const bun = jumpPeak(level(flat, 'bun'))
+    const sprout = jumpPeak(level(flat, 'sprout'))
+    const zip = jumpPeak(level(flat, 'zip'))
+    expect(bun).toBeGreaterThan(sprout)
+    expect(sprout).toBeGreaterThan(zip)
+    expect(zip).toBeGreaterThan(4.1)
+  })
+
+  it('lets only Bun glide while the jump button is held', () => {
+    const fallSpeed = (character: CharacterId) => {
+      const world = level(flat, character)
+      world.player.y = 11
+      run(world, 0.5, input({ jump: true }))
+      return { vy: world.player.vy, gliding: world.player.gliding }
+    }
+    const bun = fallSpeed('bun')
+    const sprout = fallSpeed('sprout')
+    expect(bun.gliding).toBe(true)
+    expect(bun.vy).toBeCloseTo(-(CHARACTERS.bun.moves.glideSpeed ?? 0), 5)
+    expect(sprout.gliding).toBe(false)
+    expect(sprout.vy).toBeLessThan(-20)
+  })
+
+  it('switches the moveset when the hero changes', () => {
+    const world = level(flat, 'sprout')
+    world.setCharacter('zip')
+    run(world, 0.2)
+    run(world, 1, input({ axis: 1 }))
+    expect(world.character).toBe('zip')
+    expect(world.player.vx).toBeCloseTo(CHARACTERS.zip.moves.walkSpeed, 5)
   })
 })
 

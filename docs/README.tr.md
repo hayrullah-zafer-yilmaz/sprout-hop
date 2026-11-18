@@ -11,6 +11,7 @@
 
 ## Özellikler
 
+- **Seçilebilen üç kahraman**: Sprout dengelidir, Zip en hızlı koşar, Bun en yükseğe zıplar ve zıplama tuşunu basılı tuttuğunuzda süzülür. Seçtiğiniz kahraman canlı bir 3B önizlemeyle gösterilir.
 - **Eksiksiz bir bölüm**: yaklaşık 220 karo genişliğinde. Çukurlar, merdivenler, tek yönlü kalaslar, dikenler, bir kontrol noktası, biri yatay biri dikey iki hareketli platform ve sonunda bir bayrak var.
 - **İnce ayarlı platform kontrolleri**: hızlanma ve frenleme, koşma tuşu, basılı tutma süresine göre değişen zıplama yüksekliği, "coyote time" ve zıplama tamponu.
 - **Alttan vurulan bloklar**: altın sandıkları, can sandıkları ve kırılan tuğlalar.
@@ -21,14 +22,16 @@
 
 ## Kontroller
 
-| Eylem          | Klavye                  | Oyun kumandası         |
-| -------------- | ----------------------- | ---------------------- |
-| Hareket        | `←` `→` veya `A` `D`    | Sol analog, yön tuşları |
-| Zıplama        | `Space`, `W` veya `↑`   | `A`                    |
-| Koşma          | `Shift`                 | `X`                    |
-| Duraklatma     | `Esc` veya `P`          | `Start`                |
-| Yeniden başlatma | `R`                   |                        |
-| Ses            | `M`                     |                        |
+| Eylem             | Klavye                                | Oyun kumandası          |
+| ----------------- | ------------------------------------- | ----------------------- |
+| Kahraman seçme    | Kahraman ekranında `←` `→`            | Sol analog, yön tuşları |
+| Hareket           | `←` `→` veya `A` `D`                  | Sol analog, yön tuşları |
+| Zıplama           | `Space`, `W` veya `↑`                 | `A`                     |
+| Süzülme (Bun)     | Düşerken zıplama tuşunu basılı tutun  | `A` basılı              |
+| Koşma             | `Shift`                               | `X`                     |
+| Duraklatma        | `Esc` veya `P`                        | `Start`                 |
+| Yeniden başlatma  | `R`                                   |                         |
+| Ses               | `M`                                   |                         |
 
 Daha yükseğe zıplamak için zıplama tuşunu basılı tutun. Koşarken yapılan zıplamalar biraz daha uzağa gider.
 
@@ -59,6 +62,7 @@ Oyun mantığı ile çizim birbirinden ayrıdır.
 
 - **`src/game/`** kuralları Three.js ve Vue içermeyen düz TypeScript ile tutar:
   - `config.ts`: fizik ve kurallar
+  - `characters.ts`: üç kahraman ve hareket özellikleri
   - `collision.ts`: karo ızgarasına karşı AABB çarpışması
   - `entities.ts`: varlık tipleri ve oluşturucuları
   - `world.ts`: oyun kuralları
@@ -95,7 +99,7 @@ Bölüm, [`src/game/level.ts`](../src/game/level.ts) içindeki bir ASCII haritad
 | `P`  | Oyuncunun başlangıç yeri |
 | `F`  | Bitiş bayrağı |
 
-Varsayılan fizikle, basılı tutulan bir zıplama 4 karodan biraz daha yükseğe çıkar. Yürürken yapılan zıplama 5 karoluk, koşarken yapılan zıplama 8 karoluk bir boşluğu geçer. Haritayı değiştirdikten sonra `npm test`, botun bölümü hala bitirip bitiremediğini söyler.
+Varsayılan fizikle, basılı tutulan bir zıplama 4 karodan biraz daha yükseğe çıkar. Yürürken yapılan zıplama 5 karoluk, koşarken yapılan zıplama 8 karoluk bir boşluğu geçer. Haritayı değiştirdikten sonra `npm test`, botun bölümü her kahramanla hala bitirip bitiremediğini söyler.
 
 ## Proje yapısı
 
@@ -106,7 +110,7 @@ src/
   app/               tarayıcı durumu ve servisler: arayüz durumu, i18n, giriş, ses
   components/scene/  dünyayı çizen Tres bileşenleri
   components/ui/     Vue HUD ve menüler
-tests/               çarpışma, dünya kuralları ve tüm bölümü oynayan bot için Vitest testleri
+tests/               çarpışma, dünya kuralları, kahramanlar ve her kahramanla tüm bölümü oynayan bot için Vitest testleri
 ```
 
 ## Yayınlama

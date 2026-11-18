@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.0 (2026-11-18)
+
+- Hero selection with three heroes: Sprout is balanced, Zip runs the fastest, and Bun jumps the highest and glides while jump is held.
+- A hero screen with a live 3D preview, speed and jump ratings, and keyboard, gamepad and mouse controls.
+- The chosen hero is saved, shown in the HUD, and can be changed from the pause and result screens.
+- The bot test now finishes the level with every hero.
+
 ## 0.1.0 (2026-11-18)
 
 - First playable level, Sunny Meadow: about 220 tiles with pits, stairs, one-way planks, spikes, a checkpoint, two moving platforms and a goal flag.

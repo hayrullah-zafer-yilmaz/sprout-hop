@@ -11,6 +11,7 @@ A 2.5D side-scrolling platformer level built with [Vue 3](https://vuejs.org), [T
 
 ## Features
 
+- **Three heroes to choose from**: Sprout is balanced, Zip runs the fastest, and Bun jumps the highest and glides while you hold jump. A live 3D preview shows the hero you pick.
 - **One full level**, about 220 tiles wide, with pits, stairs, one-way planks, spikes, a checkpoint, a horizontal and a vertical moving platform, and a flag at the end.
 - **Tuned platformer controls**: acceleration and braking, a run button, variable jump height, coyote time and jump buffering.
 - **Blocks you hit from below**: coin crates, life crates and breakable bricks.
@@ -21,14 +22,16 @@ A 2.5D side-scrolling platformer level built with [Vue 3](https://vuejs.org), [T
 
 ## Controls
 
-| Action  | Keyboard                | Gamepad          |
-| ------- | ----------------------- | ---------------- |
-| Move    | `←` `→` or `A` `D`      | Left stick, D-pad |
-| Jump    | `Space`, `W` or `↑`     | `A`              |
-| Run     | `Shift`                 | `X`              |
-| Pause   | `Esc` or `P`            | `Start`          |
-| Restart | `R`                     |                  |
-| Sound   | `M`                     |                  |
+| Action      | Keyboard                       | Gamepad           |
+| ----------- | ------------------------------ | ----------------- |
+| Choose hero | `←` `→` on the hero screen     | Left stick, D-pad |
+| Move        | `←` `→` or `A` `D`             | Left stick, D-pad |
+| Jump        | `Space`, `W` or `↑`            | `A`               |
+| Glide (Bun) | Hold jump while falling        | Hold `A`          |
+| Run         | `Shift`                        | `X`               |
+| Pause       | `Esc` or `P`                   | `Start`           |
+| Restart     | `R`                            |                   |
+| Sound       | `M`                            |                   |
 
 Hold the jump button to jump higher. Running also makes jumps a little longer.
 
@@ -59,6 +62,7 @@ The game logic and the rendering are kept apart.
 
 - **`src/game/`** holds the rules in plain TypeScript, with no Three.js and no Vue:
   - `config.ts`: physics and rules
+  - `characters.ts`: the three heroes and their movesets
   - `collision.ts`: AABB collision against the tile grid
   - `entities.ts`: entity types and factories
   - `world.ts`: the game loop rules
@@ -95,7 +99,7 @@ The level is an ASCII map in [`src/game/level.ts`](src/game/level.ts). Each char
 | `P`  | Player start |
 | `F`  | Goal flag |
 
-With the default physics, a held jump reaches just over 4 tiles high. A walking jump clears a gap of 5 tiles and a running jump a gap of 8. After you change the map, `npm test` tells you whether the bot can still finish it.
+With the default physics, a held jump reaches just over 4 tiles high. A walking jump clears a gap of 5 tiles and a running jump a gap of 8. After you change the map, `npm test` tells you whether the bot can still finish it with every hero.
 
 ## Project structure
 
@@ -106,7 +110,7 @@ src/
   app/               browser state and services: UI store, i18n, input, audio
   components/scene/  Tres components that draw the world
   components/ui/     Vue HUD and menus
-tests/               Vitest suites for collision, the world rules and a full-level bot run
+tests/               Vitest suites for collision, the world rules, the heroes and a full-level bot run for each hero
 ```
 
 ## Deployment

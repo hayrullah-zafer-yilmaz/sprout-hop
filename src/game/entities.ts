@@ -39,6 +39,7 @@ export interface Player extends Body {
   platform: Mover | null
   combo: number
   landedAt: number
+  gliding: boolean
 }
 
 export interface Enemy extends Body {
@@ -122,6 +123,7 @@ export function createPlayer(spot: Point): Player {
     platform: null,
     combo: 0,
     landedAt: -1,
+    gliding: false,
   }
 }
 
