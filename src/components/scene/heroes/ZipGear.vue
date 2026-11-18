@@ -6,11 +6,13 @@ import { strideOf } from '../../../scene/hero'
 import { getZipGear } from '../../../scene/heroGear'
 import { PRIORITY, useWorld } from '../../../scene/context'
 
+type Vec3 = [number, number, number]
+
 const gear = getZipGear()
-const SPIKES = [
-  { x: -0.075, tilt: 0.5, scale: 0.8 },
-  { x: 0, tilt: 0, scale: 1.05 },
-  { x: 0.075, tilt: -0.5, scale: 0.8 },
+const BLADES: { x: number; rotation: Vec3; scale: number }[] = [
+  { x: -0.07, rotation: [-0.5, 0, Math.PI / 2 + 0.38], scale: 0.82 },
+  { x: 0, rotation: [-0.42, 0, Math.PI / 2], scale: 1.05 },
+  { x: 0.07, rotation: [-0.5, 0, Math.PI / 2 - 0.38], scale: 0.82 },
 ]
 
 const world = useWorld()
@@ -34,18 +36,18 @@ onBeforeRender(({ elapsed }) => {
     </TresMesh>
     <TresMesh :geometry="gear.lens" :material="gear.glass" />
   </TresGroup>
-  <TresGroup ref="tuft" :position="[0, gear.tuftY, -0.05]">
+  <TresGroup ref="tuft" :position="[0, gear.tuftY, -0.03]">
     <TresMesh
-      v-for="spike in SPIKES"
-      :key="spike.x"
-      :geometry="gear.spike"
-      :material="gear.spikeSkin"
-      :position="[spike.x, 0, 0]"
-      :rotation="[0, 0, spike.tilt]"
-      :scale="spike.scale"
+      v-for="blade in BLADES"
+      :key="blade.x"
+      :geometry="gear.blade"
+      :material="gear.bladeSkin"
+      :position="[blade.x, 0, 0]"
+      :rotation="blade.rotation"
+      :scale="blade.scale"
       cast-shadow
     >
-      <TresMesh :geometry="gear.spike" :material="gear.spikeOutline" />
+      <TresMesh :geometry="gear.blade" :material="gear.bladeOutline" />
     </TresMesh>
   </TresGroup>
 </template>

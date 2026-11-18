@@ -7,11 +7,14 @@
 
 **[Tarayıcıda oynayın](https://hayrullah-zafer-yilmaz.github.io/sprout-hop/)** · [English](../README.md)
 
-![Sprout Hop oynanışı: yuvarlak turuncu kahraman bir sandıktan altın çıkarıyor, bir tuğlayı kırıyor, mor bir jölenin üstüne basıyor, bir çukurun üstünden atlıyor ve taş merdivenleri tırmanıp altın topluyor](assets/demo.gif)
+![Sprout Hop oynanışı: iki yapraklı bir filizi olan toprak saksı Sprout bir sandıktan altın çıkarıyor, bir tuğlayı kırıyor, mor bir jölenin üstüne basıyor, bir çukurun üstünden atlıyor ve taş merdivenleri tırmanıp altın topluyor](assets/demo.gif)
 
 ## Özellikler
 
-- **Seçilebilen üç kahraman**: Sprout dengelidir, Zip en hızlı koşar, Bun en yükseğe zıplar ve zıplama tuşunu basılı tuttuğunuzda süzülür. Seçtiğiniz kahraman canlı bir 3B önizlemeyle gösterilir. Her kahramanın kendi kıyafeti ve hareketle değişen bir yüzü var: göz kırpar, koşarken gözlerini kısar, havada şaşırır ve bayrakta sevinir.
+- **Seçilebilen üç saksı kahraman**: oyunun adına uygun olarak her biri, toprağından bir filiz çıkan küçük bir saksıdır. Seçtiğiniz kahraman canlı bir 3B önizlemeyle gösterilir. Her kahramanın parlak, iri gözleri ve hareketle değişen bir yüzü var: göz kırpar, koşarken gözlerini kısar, havada şaşırır ve bayrakta sevinir.
+  - İki büyük yapraklı toprak saksı **Sprout** dengelidir.
+  - Kenarında gözlüğü ve geriye yatık yaprakları olan sarı saksı **Zip** en hızlı koşar.
+  - Pembe kenarlı, tavşan kulağı gibi iki uzun yapraklı krem saksı **Bun** en yükseğe zıplar ve zıplama tuşunu basılı tuttuğunuzda süzülür.
 - **Üç bölüm**: her birinin kendi görünümü ve kendi en iyi puanı var. Bir bölümü bitirdiğinizde sıradaki bölüm beş saniyelik bir geri sayımın ardından kendiliğinden başlar. Kahraman ekranında da istediğiniz bölümü seçebilirsiniz.
   - **Güneşli Çayır** yaklaşık 220 karo genişliğindedir. Çukurlar, merdivenler, tek yönlü kalaslar, dikenler, bir kontrol noktası, biri yatay biri dikey iki hareketli platform ve sonunda bir bayrak var.
   - **Sisli Şelale** yaklaşık 200 karo genişliğinde bir nehir kanyonudur. Nehrin üstünde basamak taşları, tahta bir köprü, bir asansör ve hareketli bir platform var. Arka planda üç şelale nehre dökülür; sis yükselir, dipte köpük oluşur ve bir gökkuşağı görünür.
@@ -23,9 +26,9 @@
 - **Puan, altın, can ve süre**. Kalan süre bonus puana dönüşür, her bölümün en iyi puanı `localStorage` içinde saklanır.
 - **Klavye ve oyun kumandası** desteği, duraklatma menüsü, İngilizce ve Türkçe arayüz.
 
-![Sisli Şelale: sarı kahraman Zip, bir şelalenin ve soluk bir gökkuşağının önünde iki sandıktan altın çıkarıyor, sonra nehrin üstündeki taş sütunlarda zıplayarak ilerliyor](assets/misty-falls.gif)
+![Sisli Şelale: gözlüklü sarı saksı Zip, bir şelalenin ve soluk bir gökkuşağının önünde iki sandıktan altın çıkarıyor, sonra nehrin üstündeki taş sütunlarda zıplayarak ilerliyor](assets/misty-falls.gif)
 
-![Magma Dağı: tavşan Bun bir sandıktan altın çıkarıyor, yerdeki bir gölge düşecek taşı gösteriyor, taş Bun'un hemen yanında bir toz bulutuyla parçalanıyor ve yol tüten bir yanardağın altında, kayalıklardan dökülen bir lav şelalesinin önünden geçip lav gölünün üstünden devam ediyor](assets/magma-mountain.gif)
+![Magma Dağı: tavşan kulağı gibi yaprakları olan krem saksı Bun bir sandıktan altın çıkarıyor, yerdeki bir gölge düşecek taşı gösteriyor, taş Bun'un hemen yanında bir toz bulutuyla parçalanıyor ve yol tüten bir yanardağın altında, kayalıklardan dökülen bir lav şelalesinin önünden geçip lav gölünün üstünden devam ediyor](assets/magma-mountain.gif)
 
 ## Kontroller
 
@@ -79,12 +82,12 @@ Oyun mantığı ile çizim birbirinden ayrıdır.
   Dünya 1/120 saniyelik sabit adımlarla ilerler. Düz kod olduğu için Vitest onu doğrudan test eder; küçük bir bot her bölümü her kahramanla baştan sona oynar.
 - **`src/components/scene/LevelScene.vue`** her oyun için bir dünya oluşturur ve onu TresJS `useLoop().onBeforeRender` döngüsü içinde ilerletir. Karedeki sırayı `src/scene/context.ts` içindeki adlandırılmış öncelikler belirler: önce dünya ilerler, sonra modeller onun durumunu kopyalar, en son kamera ve gökyüzü takip eder.
 - **Her bölümün bir teması var** (`src/scene/themes.ts`): gökyüzü, sis, ışık, karo ve bitki renkleri ile hangi arka planın kurulacağı. Statik manzara her bölüm için tohumlu bir rastgele sayı üreteciyle bir kez oluşturulur ve yeniden başlatmalarda korunur. Çayırda tepeler ve vadide bir orman var. Şelale ve Magma Dağı aynı kanyon kurucusunu kullanır (`src/scene/canyon.ts`): kayalıklar, sudan ya da lavdan şelaleler, köpük ve alttaki deniz her karede hareket eder. Magma Dağı'nda bulutlar ve güneş yerine süzülen duman var; ayrıca tüten bir yanardağ ve yükselen közler eklenir (`src/scene/volcano.ts`); açık renkli bazalt platformlar lavın önünde net seçilir. Yalnızca oyun sırasında değişen parçalar yeniden kurulur.
-- **Kahramanlar** aynı gövde biçimini paylaşır; renk, kıyafet ve yüzle ayrışır (`src/scene/hero.ts`, `heroKit.ts`, `heroGear.ts`). Her yüz, gövdeye yansıtılan sekiz ifadelik bir canvas atlasıdır ve model her karede oyunun durumuna göre birini seçer (`heroFace.ts`). İnce bir dış çizgi ve yumuşak bir kenar ışığı, kahramanların kalabalık arka planlarda da kolayca seçilmesini sağlar.
+- **Kahramanlar** aynı saksıyı paylaşır: bir profilin döndürülmesiyle kurulan yuvarlak bir gövde, üstünde bir kenar bandı ve toprak. Sır rengi, bitki, aksesuar ve yüzle ayrışırlar (`src/scene/hero.ts`, `heroKit.ts`, `heroGear.ts`). Yapraklar, damarları canvas üzerine çizilmiş, kalınlık verilmiş şekillerdir. Her yüz, saksıya yansıtılan sekiz ifadelik bir canvas atlasıdır ve model her karede oyunun durumuna göre birini seçer (`heroFace.ts`). İnce bir dış çizgi ve yumuşak bir kenar ışığı, kahramanların kalabalık arka planlarda da kolayca seçilmesini sağlar.
 - **Çizim çağrısı sayısı düşük tutulur**:
   - Karolar, altınlar, bulutlar, efektler ve manzara `InstancedMesh` ile çizilir.
   - Düşmanlar geometri ve materyallerini paylaşır.
   - Gözler gibi çift parçalar tek geometride birleştirilir.
-  - Tipik bir kare çayırda yaklaşık 75, şelalede yaklaşık 85, Magma Dağı'nda yaklaşık 100 çizim çağrısıyla çizilir.
+  - Tipik bir kare çayırda yaklaşık 70, şelalede yaklaşık 80, Magma Dağı'nda yaklaşık 100 çizim çağrısıyla çizilir.
 - **Vue reaktivitesi yalnızca HUD ve menüler için kullanılır.** 3B modeller bir kez çizilir, sonra her karede template ref üzerinden hareket ettirilir.
 
 ## Bölümleri düzenlemek

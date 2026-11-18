@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.0 (2026-11-19)
+
+- New hero designs that match the game's name. Each hero is a little flower pot with a sprout growing out of its soil, with big glossy eyes, blushing cheeks, stubby arms and feet.
+- Sprout is a terracotta pot with two big veined leaves on a short stem. Zip is a yellow pot with goggles on its rim and three swept-back leaves. Bun is a cream pot with a pink rim and two long leaves shaped like bunny ears, which spread out while it glides.
+- The leaves move with the hero: they sway and sweep back on the run, and Sprout's lift or droop in the air.
+- New portraits on the hero screen, in the HUD and as the title logo, a new favicon, and README GIFs that show the new heroes.
+
 ## 0.5.0 (2026-11-19)
 
 - A third level, Magma Mountain: a path over a lava lake, about 210 tiles wide, with basalt columns, a plank bridge, a lift and a moving platform.

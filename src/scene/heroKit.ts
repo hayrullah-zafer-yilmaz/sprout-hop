@@ -15,11 +15,13 @@ import {
 } from 'three'
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js'
 import type { CharacterId } from '../game/characters'
-import { FACE, HERO, HERO_LOOKS, bodyPoint, bodyRadiusAt, type HeroLook } from './hero'
+import { BELLY, FACE, HERO, HERO_LOOKS, POT, bodyPoint, bodyRadiusAt, type HeroLook } from './hero'
 import { getFaceAtlas, type FaceAtlas } from './heroFace'
+import { createRandom } from './textures'
 
 const PROFILE_STEPS = 32
 const BODY_SEGMENTS = 48
+const CORNER_STEPS = 5
 const FACE_LIFT = 0.004
 const SKIN = { roughness: 0.56, lift: 0.1, rim: 0.42 }
 const OUTLINE = { body: 0.013, part: 0.009 }
@@ -28,6 +30,8 @@ export interface HeroKit {
   look: HeroLook
   atlas: FaceAtlas
   body: MeshStandardMaterial
+  collar: MeshStandardMaterial
+  soil: MeshStandardMaterial
   limbs: MeshStandardMaterial
   face: MeshStandardMaterial
   shoe: BufferGeometry
@@ -37,13 +41,19 @@ export interface HeroKit {
 }
 
 export const bodyGeometry = new LatheGeometry(
-  Array.from({ length: PROFILE_STEPS + 1 }, (_, i) => {
-    const { r, y } = bodyPoint((i / PROFILE_STEPS) * Math.PI)
-    return new Vector2(r, y)
-  }),
+  [
+    new Vector2(0, POT.base),
+    ...Array.from({ length: PROFILE_STEPS + 1 }, (_, i) => {
+      const { r, y } = bodyPoint(BELLY.from + ((BELLY.to - BELLY.from) * i) / PROFILE_STEPS)
+      return new Vector2(r, y)
+    }),
+  ],
   BODY_SEGMENTS,
-  Math.PI,
 )
+
+export const collarGeometry = new LatheGeometry(collarProfile(), BODY_SEGMENTS)
+
+export const soilGeometry = createSoilGeometry()
 
 export const faceGeometry = createFaceGeometry()
 
@@ -52,6 +62,47 @@ export const armGeometry = new SphereGeometry(0.1, 20, 14)
 const skins = new Map<string, MeshStandardMaterial>()
 const outlines = new Map<string, MeshBasicMaterial>()
 const kits = new Map<CharacterId, HeroKit>()
+
+function collarProfile(): Vector2[] {
+  const { bottom, top, radius, lip, round } = POT.collar
+  const points: Vector2[] = []
+  const corner = (cx: number, cy: number, from: number) => {
+    for (let i = 0; i <= CORNER_STEPS; i++) {
+      const angle = from + (i / CORNER_STEPS) * (Math.PI / 2)
+      points.push(new Vector2(cx + Math.cos(angle) * round, cy + Math.sin(angle) * round))
+    }
+  }
+  corner(lip - 0.02 + round, bottom + round, Math.PI)
+  corner(radius - round, bottom + round, -Math.PI / 2)
+  corner(radius - round, top - round, 0)
+  corner(lip + round, top - round, Math.PI / 2)
+  points.push(new Vector2(lip, top - 0.08))
+  return points
+}
+
+function createSoilGeometry(): BufferGeometry {
+  const { lip } = POT.collar
+  const geometry = new SphereGeometry(lip + 0.004, 28, 8, 0, Math.PI * 2, 0, Math.PI / 2)
+  geometry.scale(1, POT.soil.height, 1).translate(0, POT.soil.y, 0)
+  const random = createRandom(17)
+  const position = geometry.attributes.position
+  const offsets = new Map<string, number>()
+  for (let i = 0; i < position.count; i++) {
+    const x = position.getX(i)
+    const y = position.getY(i)
+    const z = position.getZ(i)
+    if (y - POT.soil.y < 0.01) continue
+    const key = `${x.toFixed(4)},${z.toFixed(4)}`
+    let offset = offsets.get(key)
+    if (offset === undefined) {
+      offset = (random() - 0.5) * 0.022
+      offsets.set(key, offset)
+    }
+    position.setY(i, y + offset)
+  }
+  geometry.computeVertexNormals()
+  return geometry
+}
 
 function createFaceGeometry(): BufferGeometry {
   const geometry = new PlaneGeometry(FACE.width, FACE.height, 36, 22)
@@ -163,8 +214,10 @@ export function getHeroKit(id: CharacterId): HeroKit {
   const kit: HeroKit = {
     look,
     atlas,
-    body: skin(look.body, look.rim),
-    limbs: skin(look.limbs, look.rim),
+    body: skin(look.body, look.rim, { roughness: look.roughness }),
+    collar: skin(look.collar, look.rim, { roughness: look.roughness }),
+    soil: skin(look.soil, '#b0805a', { roughness: 1, flatShading: true, emissiveIntensity: 0.04 }),
+    limbs: skin(look.limbs, look.rim, { roughness: look.roughness }),
     face,
     shoe: createShoe(look),
     shoeSkin: skin('#ffffff', look.rim, { vertexColors: true, emissiveIntensity: 0, roughness: 0.62 }),

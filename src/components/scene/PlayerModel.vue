@@ -8,7 +8,7 @@ import { RULES } from '../../game/config'
 import { ui } from '../../app/store'
 import { HERO, strideOf } from '../../scene/hero'
 import type { Expression } from '../../scene/heroFace'
-import { armGeometry, bodyGeometry, faceGeometry, getHeroKit } from '../../scene/heroKit'
+import { armGeometry, bodyGeometry, collarGeometry, faceGeometry, getHeroKit, soilGeometry } from '../../scene/heroKit'
 import { PRIORITY, useWorld } from '../../scene/context'
 import { nodeList } from '../../scene/nodes'
 import SproutGear from './heroes/SproutGear.vue'
@@ -179,12 +179,16 @@ onBeforeRender(({ delta, elapsed }) => {
       <TresMesh :geometry="bodyGeometry" :material="kit.body" cast-shadow>
         <TresMesh :geometry="bodyGeometry" :material="kit.outline" />
       </TresMesh>
+      <TresMesh :geometry="collarGeometry" :material="kit.collar" cast-shadow>
+        <TresMesh :geometry="collarGeometry" :material="kit.outline" />
+      </TresMesh>
+      <TresMesh :geometry="soilGeometry" :material="kit.soil" />
       <TresMesh :geometry="faceGeometry" :material="kit.face" />
       <TresGroup
         v-for="(shoulder, index) in SHOULDERS"
         :key="shoulder.side"
         :ref="arms.refAt(index)"
-        :position="[shoulder.side * 0.405, CENTER + 0.02, 0.03]"
+        :position="[shoulder.side * 0.415, CENTER, 0.02]"
       >
         <TresMesh :geometry="armGeometry" :material="kit.limbs" :position="[0, -0.078, 0]" :scale="[0.86, 1.1, 0.9]" cast-shadow>
           <TresMesh :geometry="armGeometry" :material="kit.fineOutline" />

@@ -7,11 +7,14 @@ A 2.5D side-scrolling platformer built with [Vue 3](https://vuejs.org), [TresJS]
 
 **[Play it in your browser](https://hayrullah-zafer-yilmaz.github.io/sprout-hop/)** · [Türkçe](docs/README.tr.md)
 
-![Sprout Hop gameplay: the round orange hero pops a coin out of a crate, breaks a brick, stomps a purple slime, jumps over a pit and climbs stone stairs to collect coins](docs/assets/demo.gif)
+![Sprout Hop gameplay: Sprout, a terracotta pot with a two-leaf sprout, pops a coin out of a crate, breaks a brick, stomps a purple slime, jumps over a pit and climbs stone stairs to collect coins](docs/assets/demo.gif)
 
 ## Features
 
-- **Three heroes to choose from**: Sprout is balanced, Zip runs the fastest, and Bun jumps the highest and glides while you hold jump. A live 3D preview shows the hero you pick. Each hero has its own outfit and a face that follows the action: they blink, squint while running, gasp in the air and cheer at the flag.
+- **Three potted heroes to choose from**, true to the name: each one is a little flower pot with a sprout growing out of its soil. A live 3D preview shows the hero you pick. Each hero has big glossy eyes and a face that follows the action: they blink, squint while running, gasp in the air and cheer at the flag.
+  - **Sprout**, a terracotta pot with two big leaves, is balanced.
+  - **Zip**, a yellow pot with goggles on its rim and swept-back leaves, runs the fastest.
+  - **Bun**, a cream pot with a pink rim and two long leaves like bunny ears, jumps the highest and glides while you hold jump.
 - **Three levels**, each with its own look and its own best score. When you finish a level, the next one starts after a five-second countdown, and the hero screen lets you pick any level.
   - **Sunny Meadow** is about 220 tiles wide, with pits, stairs, one-way planks, spikes, a checkpoint, a horizontal and a vertical moving platform, and a flag at the end.
   - **Misty Falls** is a river canyon about 200 tiles wide, with stepping stones, a wooden bridge, a lift and a moving platform over the river. In the background, three waterfalls pour into the river, with rising mist, foam and a rainbow.
@@ -23,9 +26,9 @@ A 2.5D side-scrolling platformer built with [Vue 3](https://vuejs.org), [TresJS]
 - **Score, coins, lives and a timer**. Leftover time becomes bonus points, and the best score of each level is kept in `localStorage`.
 - **Keyboard and gamepad** input, a pause menu, and English and Turkish UI.
 
-![Misty Falls: Zip, the yellow hero, pops coins out of two crates in front of a waterfall and a faint rainbow, then hops across stone columns over the river](docs/assets/misty-falls.gif)
+![Misty Falls: Zip, the yellow pot with goggles, pops coins out of two crates in front of a waterfall and a faint rainbow, then hops across stone columns over the river](docs/assets/misty-falls.gif)
 
-![Magma Mountain: Bun, the bunny, pops a coin out of a crate, a shadow on the ground warns of a falling rock that shatters in a cloud of dust right next to Bun, and the path continues over a lava lake, past a lava fall pouring out of the cliffs, under a smoking volcano](docs/assets/magma-mountain.gif)
+![Magma Mountain: Bun, the cream pot with leaves like bunny ears, pops a coin out of a crate, a shadow on the ground warns of a falling rock that shatters in a cloud of dust right next to Bun, and the path continues over a lava lake, past a lava fall pouring out of the cliffs, under a smoking volcano](docs/assets/magma-mountain.gif)
 
 ## Controls
 
@@ -79,12 +82,12 @@ The game logic and the rendering are kept apart.
   The world advances in fixed steps of 1/120 s. Because it is plain code, Vitest tests it directly, and a small bot plays through every level with every hero.
 - **`src/components/scene/LevelScene.vue`** creates a world for each run and steps it from TresJS's `useLoop().onBeforeRender`. Named priorities in `src/scene/context.ts` set the order inside each frame: the world steps first, the models then copy its state, and the camera and the sky follow last.
 - **Each level has a theme** in `src/scene/themes.ts`: the sky, fog, light, tile and plant colors, and which backdrop to build. The static scenery is generated once per level from a seeded random generator and survives restarts. The meadow gets hills and a forest in the valley. The falls and Magma Mountain share a canyon builder (`src/scene/canyon.ts`) for cliffs, falls of water or lava, foam and the sea below, all moving every frame. Magma Mountain swaps the clouds and the sun for drifting smoke, and adds a smoking volcano and rising embers (`src/scene/volcano.ts`), with light basalt platforms that stand out against the lava. Only the parts that change during a run are rebuilt.
-- **The heroes** share one body shape and differ in color, outfit and face (`src/scene/hero.ts`, `heroKit.ts`, `heroGear.ts`). Each face is a canvas atlas of eight expressions projected onto the body, and the model picks one from the game state every frame (`heroFace.ts`). A thin outline and a soft rim light keep the heroes readable against busy backgrounds.
+- **The heroes** share one pot: a round belly turned from a profile, with a rim band and soil on top. They differ in glaze, plant, gear and face (`src/scene/hero.ts`, `heroKit.ts`, `heroGear.ts`). The leaves are extruded shapes with veins drawn on a canvas. Each face is a canvas atlas of eight expressions projected onto the pot, and the model picks one from the game state every frame (`heroFace.ts`). A thin outline and a soft rim light keep the heroes readable against busy backgrounds.
 - **Draw calls are kept low**:
   - Tiles, coins, clouds, effects and scenery are drawn with `InstancedMesh`.
   - Enemies share their geometries and materials.
   - Paired parts such as eyes are merged into one geometry.
-  - A typical frame needs about 75 draw calls in the meadow, 85 at the falls and 100 on Magma Mountain.
+  - A typical frame needs about 70 draw calls in the meadow, 80 at the falls and 100 on Magma Mountain.
 - **Vue reactivity is used only for the HUD and menus.** The 3D models render once and are then moved through template refs every frame.
 
 ## Editing the levels

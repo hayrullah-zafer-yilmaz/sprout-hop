@@ -23,10 +23,10 @@ const COLUMNS = 4
 const ROWS = 2
 const CELL = { width: 512, height: 320 }
 const PX = CELL.width / FACE.width
-const EYE = { x: 0.136, y: 0.058, rx: 0.08, ry: 0.104 }
-const MOUTH_Y = -0.088
-const NOSE_Y = -0.042
-const CHEEK = { x: 0.238, y: -0.052, rx: 0.06, ry: 0.034 }
+const EYE = { x: 0.142, y: 0.06, rx: 0.086, ry: 0.104 }
+const MOUTH_Y = -0.09
+const NOSE_Y = -0.044
+const CHEEK = { x: 0.236, y: -0.058, rx: 0.064, ry: 0.036 }
 const LINE = 9
 const SIDES: Side[] = [-1, 1]
 
@@ -62,29 +62,26 @@ function eyeFrame(side: Side, scale = 1) {
 function openEye({ ctx, look }: Face, side: Side, options: { scale?: number; lid?: boolean } = {}): void {
   const { cx, cy, rx, ry } = eyeFrame(side, options.scale)
   const white = ellipse(cx, cy, rx, ry)
-  const sclera = ctx.createLinearGradient(0, cy - ry, 0, cy + ry)
-  sclera.addColorStop(0, '#d5deea')
-  sclera.addColorStop(0.34, '#ffffff')
-  sclera.addColorStop(1, '#f2f5fa')
-  ctx.fillStyle = sclera
+  ctx.fillStyle = '#ffffff'
   ctx.fill(white)
 
   ctx.save()
   ctx.clip(white)
-  const irisY = cy + ry * 0.14
-  const irx = rx * 0.78
-  const iry = ry * 0.76
-  const iris = ctx.createRadialGradient(cx, irisY + iry * 0.5, iry * 0.08, cx, irisY, iry * 1.05)
+  const irisY = cy + ry * 0.1
+  const irx = rx * 0.84
+  const iry = ry * 0.84
+  const iris = ctx.createRadialGradient(cx, irisY + iry * 0.62, iry * 0.05, cx, irisY + iry * 0.1, iry * 1.05)
   iris.addColorStop(0, look.iris[0])
+  iris.addColorStop(0.7, look.iris[1])
   iris.addColorStop(1, look.iris[1])
   ctx.fillStyle = iris
   ctx.fill(ellipse(cx, irisY, irx, iry))
-  ctx.fillStyle = '#0a1020'
-  ctx.fill(ellipse(cx, irisY + iry * 0.06, irx * 0.48, iry * 0.52))
+  ctx.fillStyle = 'rgba(6, 4, 10, 0.85)'
+  ctx.fill(ellipse(cx, irisY - iry * 0.04, irx * 0.56, iry * 0.6))
   ctx.fillStyle = '#ffffff'
-  ctx.fill(ellipse(cx - irx * 0.34, irisY - iry * 0.36, irx * 0.34, iry * 0.28, -0.5))
-  ctx.globalAlpha = 0.9
-  ctx.fill(ellipse(cx + irx * 0.38, irisY + iry * 0.46, irx * 0.15, irx * 0.15))
+  ctx.fill(ellipse(cx - irx * 0.3, irisY - iry * 0.38, irx * 0.4, iry * 0.32, -0.45))
+  ctx.globalAlpha = 0.95
+  ctx.fill(ellipse(cx + irx * 0.4, irisY + iry * 0.4, irx * 0.17, irx * 0.17))
   ctx.globalAlpha = 1
   if (options.lid) {
     const outerY = cy - ry * 0.5
@@ -103,25 +100,13 @@ function openEye({ ctx, look }: Face, side: Side, options: { scale?: number; lid
   ctx.strokeStyle = look.ink
   ctx.lineCap = 'round'
   ctx.lineJoin = 'round'
-  ctx.lineWidth = 4
+  ctx.lineWidth = 6
   ctx.stroke(white)
+  if (!options.lid) return
   ctx.lineWidth = LINE + 1
-  if (options.lid) {
-    ctx.beginPath()
-    ctx.moveTo(cx + side * rx * 1.02, cy - ry * 0.5)
-    ctx.lineTo(cx - side * rx * 1.02, cy - ry * 0.12)
-    ctx.stroke()
-    return
-  }
   ctx.beginPath()
-  ctx.ellipse(cx, cy, rx, ry, 0, Math.PI * 1.1, Math.PI * 1.9)
-  ctx.stroke()
-  const corner = side < 0 ? Math.PI * 1.1 : Math.PI * 1.9
-  const x = cx + Math.cos(corner) * rx
-  const y = cy + Math.sin(corner) * ry
-  ctx.beginPath()
-  ctx.moveTo(x, y)
-  ctx.quadraticCurveTo(x + side * 10, y - 2, x + side * 16, y - 12)
+  ctx.moveTo(cx + side * rx * 1.02, cy - ry * 0.5)
+  ctx.lineTo(cx - side * rx * 1.02, cy - ry * 0.12)
   ctx.stroke()
 }
 
@@ -182,8 +167,8 @@ function cheeks({ ctx, look, id }: Face, strength = 1): void {
     ctx.translate(cx, cy)
     ctx.scale(1, ry / rx)
     const glow = ctx.createRadialGradient(0, 0, 0, 0, 0, rx)
-    glow.addColorStop(0, rgba(look.blush, 0.72 * strength))
-    glow.addColorStop(0.55, rgba(look.blush, 0.42 * strength))
+    glow.addColorStop(0, rgba(look.blush, Math.min(1, 0.9 * strength)))
+    glow.addColorStop(0.55, rgba(look.blush, Math.min(1, 0.58 * strength)))
     glow.addColorStop(1, rgba(look.blush, 0))
     ctx.fillStyle = glow
     ctx.beginPath()
