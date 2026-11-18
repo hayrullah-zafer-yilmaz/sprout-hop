@@ -71,7 +71,7 @@ function decide(world: World, held: { jump: number; still: number }): InputState
       .filter((item) => item.alive && item.x > p.x && Math.abs(item.y - feet) < 1.5)
       .reduce<{ gap: number; reach: number } | null>((best, item) => {
         const gap = item.x - front
-        const reach = (item.kind === 'spiky' ? 2.4 : 1.6) * reaction
+        const reach = (item.kind === 'burr' ? 2.4 : 1.6) * reaction
         return best && best.gap <= gap ? best : { gap, reach }
       }, null)
     const tooClose = nearest !== null && nearest.gap < 0.9

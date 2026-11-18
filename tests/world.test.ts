@@ -52,7 +52,7 @@ describe('parseLevel', () => {
     expect(data.movers.map((mover) => mover.axis).sort()).toEqual(['x', 'y'])
     expect(data.checkpoints).toHaveLength(1)
     expect(data.coins.length).toBeGreaterThan(40)
-    expect(data.enemies.some((enemy) => enemy.kind === 'spiky')).toBe(true)
+    expect(data.enemies.some((enemy) => enemy.kind === 'burr')).toBe(true)
   })
 
   it('reads the waterfall level', () => {
@@ -252,23 +252,23 @@ describe('blocks', () => {
 })
 
 describe('enemies and hazards', () => {
-  it('defeats a slime when landing on it', () => {
+  it('defeats a slug when landing on it', () => {
     const world = level(['', '', '', '', '', '', '', '', '', '', '', 'P   s     F', '###########', '###########'])
     const log = events(world)
-    const slime = world.enemies[0]
-    world.player.x = slime.x
+    const slug = world.enemies[0]
+    world.player.x = slug.x
     world.player.y = 5
     run(world, 0.6)
-    expect(slime.alive).toBe(false)
+    expect(slug.alive).toBe(false)
     expect(world.score).toBe(RULES.stompScore)
     expect(world.phase).toBe('playing')
     expect(log).toContain('stomp')
   })
 
-  it('loses a life when touching a spiky enemy, even from above', () => {
+  it('loses a life when touching a burr, even from above', () => {
     const world = level(['', '', '', '', '', '', '', '', '', '', '', 'P   k     F', '###########', '###########'])
-    const spiky = world.enemies[0]
-    world.player.x = spiky.x
+    const burr = world.enemies[0]
+    world.player.x = burr.x
     world.player.y = 5
     run(world, 0.6)
     expect(world.phase).toBe('dying')
@@ -340,10 +340,10 @@ describe('falling rocks', () => {
 
   it('crushes an enemy standing under it', () => {
     const world = level(['      r', '', '', '', '', 'P    XsX  F', '###########', '###########'])
-    const slime = world.enemies[0]
+    const slug = world.enemies[0]
     run(world, 1.6)
-    expect(slime.alive).toBe(false)
-    expect(slime.flipped).toBe(true)
+    expect(slug.alive).toBe(false)
+    expect(slug.flipped).toBe(true)
   })
 
   it('drops nearby rocks one after another', () => {

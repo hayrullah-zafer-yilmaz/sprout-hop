@@ -11,7 +11,7 @@ export const Tile = {
 
 export type TileId = (typeof Tile)[keyof typeof Tile]
 
-export type EnemyKind = 'slime' | 'spiky'
+export type EnemyKind = 'slug' | 'burr'
 
 export interface Spawn {
   x: number
@@ -86,10 +86,10 @@ export function parseLevel(rows: string[]): LevelData {
           coins.push({ x, y })
           break
         case 's':
-          enemies.push({ x, y, kind: 'slime' })
+          enemies.push({ x, y, kind: 'slug' })
           break
         case 'k':
-          enemies.push({ x, y, kind: 'spiky' })
+          enemies.push({ x, y, kind: 'burr' })
           break
         case '^':
           spikes.push({ x, y })

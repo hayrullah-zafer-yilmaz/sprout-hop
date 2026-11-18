@@ -1,41 +1,30 @@
 import {
   BoxGeometry,
+  BufferAttribute,
   CanvasTexture,
   CircleGeometry,
+  Color,
   ConeGeometry,
   CylinderGeometry,
-  Euler,
   ExtrudeGeometry,
   IcosahedronGeometry,
-  Matrix4,
   MeshBasicMaterial,
   MeshStandardMaterial,
   Quaternion,
   SRGBColorSpace,
   Shape,
   SphereGeometry,
+  TorusGeometry,
   Vector3,
   type BufferGeometry,
 } from 'three'
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js'
+import { outline, skin } from './heroKit'
 import { createRandom, getBrickTexture } from './textures'
 
 type Vec3 = [number, number, number]
 
-interface Placement {
-  position?: Vec3
-  rotation?: Vec3
-  scale?: Vec3
-}
-
-function placed(geometry: BufferGeometry, { position = [0, 0, 0], rotation = [0, 0, 0], scale = [1, 1, 1] }: Placement): BufferGeometry {
-  const matrix = new Matrix4().compose(
-    new Vector3(...position),
-    new Quaternion().setFromEuler(new Euler(...rotation)),
-    new Vector3(...scale),
-  )
-  return geometry.applyMatrix4(matrix)
-}
+const UP = new Vector3(0, 1, 0)
 
 function merged(parts: BufferGeometry[]): BufferGeometry {
   const geometry = mergeGeometries(parts)
@@ -44,24 +33,20 @@ function merged(parts: BufferGeometry[]): BufferGeometry {
   return geometry
 }
 
-function mirrored(make: () => BufferGeometry, { position = [0, 0, 0], rotation = [0, 0, 0], scale }: Placement): BufferGeometry {
-  const [x, y, z] = position
-  const [rx, ry, rz] = rotation
-  return merged([
-    placed(make(), { position: [-x, y, z], rotation: [rx, -ry, -rz], scale }),
-    placed(make(), { position: [x, y, z], rotation, scale }),
-  ])
+function tinted(geometry: BufferGeometry, color: string | ((y: number) => Color)): BufferGeometry {
+  const position = geometry.attributes.position
+  const colors = new Float32Array(position.count * 3)
+  const flat = typeof color === 'string' ? new Color(color) : null
+  for (let i = 0; i < position.count; i++) {
+    const value = flat ?? (color as (y: number) => Color)(position.getY(i))
+    colors.set([value.r, value.g, value.b], i * 3)
+  }
+  geometry.setAttribute('color', new BufferAttribute(colors, 3))
+  return geometry
 }
 
-function spikeBall(): BufferGeometry {
-  const cone = () => new ConeGeometry(0.1, 0.3, 6)
-  const ring = Array.from({ length: 8 }, (_, i) => {
-    const angle = (i / 8) * Math.PI * 2
-    return placed(cone(), { position: [Math.cos(angle) * 0.4, Math.sin(angle) * 0.4, 0], rotation: [0, 0, angle - Math.PI / 2] })
-  })
-  const front = placed(cone(), { position: [0, 0, 0.4], rotation: [Math.PI / 2, 0, 0] })
-  const back = placed(cone(), { position: [0, 0, -0.4], rotation: [-Math.PI / 2, 0, 0] })
-  return merged([...ring, front, back])
+function aimed(geometry: BufferGeometry, direction: Vector3, at: Vector3): BufferGeometry {
+  return geometry.applyQuaternion(new Quaternion().setFromUnitVectors(UP, direction)).translate(at.x, at.y, at.z)
 }
 
 function heartGeometry(): BufferGeometry {
@@ -83,8 +68,6 @@ function heartGeometry(): BufferGeometry {
   })
   return geometry.center().rotateZ(Math.PI).scale(0.032, 0.032, 0.032)
 }
-
-const eyeWhite = new MeshStandardMaterial({ color: '#ffffff', roughness: 0.3 })
 
 export const coinParts = {
   rim: new CylinderGeometry(0.3, 0.3, 0.08, 24).rotateX(Math.PI / 2),
@@ -110,29 +93,112 @@ export const spikeParts = {
   base: new MeshStandardMaterial({ color: '#475569', roughness: 0.7 }),
 }
 
-export const slimeParts = {
-  body: placed(new SphereGeometry(0.45, 24, 16), { position: [0, 0.32, 0], scale: [1.05, 0.75, 0.95] }),
-  shine: placed(new SphereGeometry(0.08, 10, 8), { position: [-0.17, 0.5, 0.2], scale: [1, 0.6, 0.6] }),
-  eyes: mirrored(() => new SphereGeometry(0.095, 14, 10), { position: [0.14, 0.42, 0.32] }),
-  pupils: mirrored(() => new SphereGeometry(0.045, 10, 8), { position: [0.12, 0.41, 0.405] }),
-  skin: new MeshStandardMaterial({ color: '#8b5cf6', roughness: 0.25, emissive: '#2e1065', emissiveIntensity: 0.35 }),
-  gloss: new MeshBasicMaterial({ color: '#ede9fe' }),
-  eyeWhite,
-  pupil: new MeshBasicMaterial({ color: '#1e1b4b' }),
+const SLUG = { skin: '#9461f2', spot: '#5a2cb3', foot: '#cdb6ff', eye: '#ffffff', pupil: '#1e1b4b', shade: '#3b1f7a', rim: '#ece2ff' }
+const SLUG_BODY = { center: [0.02, 0.19, 0] as Vec3, radii: [0.36, 0.2, 0.22] as Vec3 }
+const SLUG_MANTLE = { center: [0.08, 0.3, 0] as Vec3, radii: [0.22, 0.15, 0.2] as Vec3 }
+const SLUG_SPOTS = [
+  { on: SLUG_MANTLE, phi: 0.45, theta: 0.7, size: 0.05 },
+  { on: SLUG_MANTLE, phi: 0.8, theta: 2.1, size: 0.042 },
+  { on: SLUG_MANTLE, phi: 0.95, theta: 1.2, size: 0.034 },
+  { on: SLUG_BODY, phi: 0.95, theta: 2.55, size: 0.046 },
+  { on: SLUG_BODY, phi: 1.15, theta: 2.95, size: 0.034 },
+]
+const STALK_PIVOT: Vec3 = [0.3, 0.36, 0]
+
+function blob(radii: Vec3, center: Vec3, color: string, widthSegments = 28, heightSegments = 18): BufferGeometry {
+  return tinted(new SphereGeometry(1, widthSegments, heightSegments).scale(...radii).translate(...center), color)
 }
 
-export const spikyParts = {
+function spotOn({ center, radii }: typeof SLUG_BODY, phi: number, theta: number, size: number): BufferGeometry {
+  const [a, b, c] = radii
+  const offset = new Vector3(a * Math.sin(phi) * Math.cos(theta), b * Math.cos(phi), c * Math.sin(phi) * Math.sin(theta))
+  const normal = new Vector3(offset.x / (a * a), offset.y / (b * b), offset.z / (c * c)).normalize()
+  const point = offset.add(new Vector3(...center)).addScaledVector(normal, 0.004)
+  return tinted(aimed(new SphereGeometry(1, 10, 6).scale(size, size * 0.3, size), normal, point), SLUG.spot)
+}
+
+function slugBody(spotted: boolean): BufferGeometry {
+  const spots = spotted ? SLUG_SPOTS.flatMap(({ on, phi, theta, size }) => [spotOn(on, phi, theta, size), spotOn(on, phi, -theta, size)]) : []
+  return merged([
+    blob(SLUG_BODY.radii, SLUG_BODY.center, SLUG.skin),
+    blob([0.27, 0.11, 0.16], [-0.3, 0.11, 0], SLUG.skin),
+    blob(SLUG_MANTLE.radii, SLUG_MANTLE.center, SLUG.skin),
+    blob([0.15, 0.145, 0.15], [0.3, 0.25, 0], SLUG.skin),
+    blob([0.5, 0.05, 0.26], [-0.02, 0.05, 0], SLUG.foot),
+    ...[-1, 1].map((side) => blob([0.05, 0.028, 0.028], [0.44, 0.18, side * 0.06], SLUG.skin, 10, 8)),
+    ...spots,
+  ])
+}
+
+function slugStalks(): BufferGeometry {
+  return merged(
+    [-1, 1].flatMap((side) => {
+      const base = new Vector3(0.02, 0, side * 0.065)
+      const direction = new Vector3(0.32, 1, side * 0.3).normalize()
+      const eye = base.clone().addScaledVector(direction, 0.27)
+      const look = new Vector3(0.85, 0.1, side * 0.5).normalize()
+      const pupil = eye.clone().addScaledVector(look, 0.045)
+      const glint = pupil.clone().addScaledVector(look, 0.03).add(new Vector3(0, 0.014, 0))
+      return [
+        tinted(aimed(new CylinderGeometry(0.02, 0.028, 0.24, 8).translate(0, 0.12, 0), direction, base), SLUG.skin),
+        tinted(new SphereGeometry(0.068, 16, 12).translate(eye.x, eye.y, eye.z), SLUG.eye),
+        tinted(new SphereGeometry(0.036, 12, 8).translate(pupil.x, pupil.y, pupil.z), SLUG.pupil),
+        tinted(new SphereGeometry(0.012, 8, 6).translate(glint.x, glint.y, glint.z), SLUG.eye),
+      ]
+    }),
+  )
+}
+
+export const slugParts = {
+  body: slugBody(true),
+  hull: slugBody(false),
+  stalks: slugStalks(),
+  stalkPivot: STALK_PIVOT,
+  skin: skin('#ffffff', SLUG.rim, { vertexColors: true, emissiveIntensity: 0, roughness: 0.26 }),
+  outline: outline(SLUG.shade, 0.012),
+  fineOutline: outline(SLUG.shade, 0.008),
+}
+
+const BURR = { body: '#8a5a2e', base: '#a8743c', tip: '#f5e6b8', shade: '#3a2410', rim: '#ffe9c4', eye: '#ffffff', pupil: '#1a1208', ink: '#2a1a0c' }
+const BURR_RADIUS = 0.27
+const THORNS = { count: 40, length: 0.22, radius: 0.036, front: 0.55 }
+
+function burrPod(): BufferGeometry {
+  const base = new Color(BURR.base)
+  const tip = new Color(BURR.tip)
+  const golden = Math.PI * (3 - Math.sqrt(5))
+  const thorns: BufferGeometry[] = []
+  for (let i = 0; i < THORNS.count; i++) {
+    const y = 1 - ((i + 0.5) * 2) / THORNS.count
+    const ring = Math.sqrt(1 - y * y)
+    const direction = new Vector3(Math.cos(i * golden) * ring, y, Math.sin(i * golden) * ring)
+    if (direction.z > THORNS.front) continue
+    const cone = new ConeGeometry(THORNS.radius, THORNS.length, 6).translate(0, THORNS.length / 2, 0).toNonIndexed()
+    tinted(cone, (h) => new Color().lerpColors(base, tip, Math.min(1, Math.max(0, h / THORNS.length - 0.25) * 1.6)))
+    thorns.push(aimed(cone, direction, direction.clone().multiplyScalar(BURR_RADIUS * 0.9)))
+  }
+  return merged([tinted(new SphereGeometry(BURR_RADIUS, 22, 16).toNonIndexed(), BURR.body), ...thorns])
+}
+
+function burrFace(): BufferGeometry {
+  const z = 0.255
+  return merged([
+    ...[-1, 1].flatMap((side) => [
+      tinted(new SphereGeometry(0.072, 16, 12).scale(1, 1.12, 0.62).translate(side * 0.1, 0.05, z), BURR.eye),
+      tinted(new SphereGeometry(0.036, 12, 8).scale(1, 1.1, 0.6).translate(side * 0.085, 0.035, z + 0.04), BURR.pupil),
+      tinted(new BoxGeometry(0.15, 0.04, 0.035).rotateZ(side * 0.42).translate(side * 0.1, 0.155, z + 0.03), BURR.ink),
+    ]),
+    tinted(new TorusGeometry(0.05, 0.013, 6, 14, Math.PI).translate(0, -0.1, z + 0.025), BURR.ink),
+  ])
+}
+
+export const burrParts = {
   rollHeight: 0.42,
-  body: new IcosahedronGeometry(0.36, 1),
-  spikes: spikeBall(),
-  eyes: mirrored(() => new SphereGeometry(0.085, 12, 8), { position: [0.13, 0.5, 0.31] }),
-  pupils: mirrored(() => new SphereGeometry(0.04, 10, 8), { position: [0.12, 0.49, 0.39] }),
-  brows: mirrored(() => new BoxGeometry(0.16, 0.035, 0.03), { position: [0.13, 0.62, 0.33], rotation: [0, 0, 0.45] }),
-  shell: new MeshStandardMaterial({ color: '#334155', roughness: 0.6, flatShading: true }),
-  spike: new MeshStandardMaterial({ color: '#e2e8f0', roughness: 0.4, flatShading: true }),
-  eyeWhite,
-  pupil: new MeshBasicMaterial({ color: '#dc2626' }),
-  brow: new MeshBasicMaterial({ color: '#0f172a' }),
+  pod: burrPod(),
+  face: burrFace(),
+  skin: skin('#ffffff', BURR.rim, { vertexColors: true, emissiveIntensity: 0, roughness: 0.55 }),
+  faceSkin: skin('#ffffff', '#ffffff', { vertexColors: true, emissiveIntensity: 0, roughness: 0.35 }),
+  outline: outline(BURR.shade, 0.009),
 }
 
 function boulder(radius: number, seed: number): BufferGeometry {

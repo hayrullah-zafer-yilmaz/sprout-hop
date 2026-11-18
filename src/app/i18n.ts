@@ -19,7 +19,7 @@ const en = {
   sound: 'Sound',
   or: 'or',
   gamepad: 'Gamepads work too: stick or D-pad to move, A to jump, X to run, Start to pause.',
-  tip: 'Hit crates from below, stomp the purple slimes and steer clear of the spiky ones. When a shadow grows on the ground, step aside: a rock is about to land there.',
+  tip: 'Hit crates from below, stomp the purple slugs and steer clear of the spiky burrs. When a shadow grows on the ground, step aside: a rock is about to land there.',
   score: 'Score',
   coins: 'Coins',
   lives: 'Lives',
@@ -76,7 +76,7 @@ const tr: Messages = {
   or: 'veya',
   gamepad:
     'Oyun kumandası da desteklenir: hareket için analog çubuğu veya yön tuşlarını, zıplamak için A, koşmak için X, duraklatmak için Start tuşunu kullanın.',
-  tip: 'Sandıklara alttan vurun, mor jölelerin üstüne basın, dikenlilerden uzak durun. Yerde büyüyen bir gölge görürseniz kenara çekilin: oraya taş düşecek.',
+  tip: 'Sandıklara alttan vurun, mor sümüklüböceklerin üstüne basın, dikenli pıtraklardan uzak durun. Yerde büyüyen bir gölge görürseniz kenara çekilin: oraya taş düşecek.',
   score: 'Puan',
   coins: 'Altın',
   lives: 'Can',

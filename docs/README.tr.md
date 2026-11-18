@@ -7,7 +7,7 @@
 
 **[Tarayıcıda oynayın](https://hayrullah-zafer-yilmaz.github.io/sprout-hop/)** · [English](../README.md)
 
-![Sprout Hop oynanışı: iki yapraklı bir filizi olan toprak saksı Sprout bir sandıktan altın çıkarıyor, bir tuğlayı kırıyor, mor bir jölenin üstüne basıyor, bir çukurun üstünden atlıyor ve taş merdivenleri tırmanıp altın topluyor](assets/demo.gif)
+![Sprout Hop oynanışı: iki yapraklı bir filizi olan toprak saksı Sprout bir sandıktan altın çıkarıyor, bir tuğlayı kırıyor, mor bir sümüklüböceğin üstüne basıyor, bir çukurun üstünden atlıyor ve taş merdivenleri tırmanıp altın topluyor](assets/demo.gif)
 
 ## Özellikler
 
@@ -21,7 +21,7 @@
   - **Magma Dağı** yaklaşık 210 karo genişliğinde, bir lav gölünün üstünden geçen bir yoldur. Bazalt sütunlar, kalastan bir köprü, bir asansör ve hareketli bir platform var. Gökten taşlar düşer: yerde büyüyen bir gölge ve yukarıdan dökülen çakıllar taşın nereye düşeceğini gösterir; kahramana çarpan taş bir cana mal olur. Arka planda tüten bir yanardağ, süzülen duman, kayalıklardan dökülen lav şelaleleri ve yükselen közler var.
 - **İnce ayarlı platform kontrolleri**: hızlanma ve frenleme, koşma tuşu, basılı tutma süresine göre değişen zıplama yüksekliği, "coyote time" ve zıplama tamponu.
 - **Alttan vurulan bloklar**: altın sandıkları, can sandıkları ve kırılan tuğlalar.
-- **İki düşman türü**: üstüne basılarak yenilen jöleler (art arda basınca puan katlanır) ve üstünden atlanması gereken dikenli toplar.
+- **İki bahçe zararlısı düşman**: üstüne basılarak yenilen mor sümüklüböcekler (art arda basınca puan katlanır) ve yuvarlanarak gelen, üstünden atlanması gereken dikenli pıtraklar.
 - **Hiç asset dosyası yok**: tüm dokular açılışta bir canvas üzerine çizilir, tüm sesler Web Audio API ile sentezlenir. Modeller Three.js temel geometrileriyle kurulur; kahramanların yüzleri de canvas üzerine çizilir.
 - **Puan, altın, can ve süre**. Kalan süre bonus puana dönüşür, her bölümün en iyi puanı `localStorage` içinde saklanır.
 - **Klavye ve oyun kumandası** desteği, duraklatma menüsü, İngilizce ve Türkçe arayüz.
@@ -103,8 +103,8 @@ Bölümler, [`src/game/levels/`](../src/game/levels/) klasöründeki ASCII harit
 | `L`  | Can sandığı |
 | `-`  | Tek yönlü kalas: alttan içinden geçip zıplayabilirsiniz |
 | `o`  | Altın |
-| `s`  | Jöle |
-| `k`  | Dikenli top |
+| `s`  | Sümüklüböcek |
+| `k`  | Pıtrak, yuvarlanan dikenli bir tohum |
 | `^`  | Dikenler |
 | `r`  | Düşen taş: önce uyarı verir, sonra bu sütuna tekrar tekrar düşer |
 | `m` … `M` | Yatay hareketli platform: başlangıç ve bitiş aynı satırda |

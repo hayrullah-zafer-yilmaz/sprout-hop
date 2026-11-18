@@ -413,7 +413,7 @@ export class World {
     for (const enemy of this.enemies) {
       if (!enemy.alive || !enemy.active || !overlaps(p, enemy)) continue
       const fromAbove = p.vy <= 0 && p.prevY >= enemy.y + enemy.h * RULES.stompHeight
-      if (enemy.kind === 'slime' && fromAbove) {
+      if (enemy.kind === 'slug' && fromAbove) {
         this.stomp(enemy, jumpHeld)
       } else if (p.invulnerable <= 0) {
         this.killPlayer(false)

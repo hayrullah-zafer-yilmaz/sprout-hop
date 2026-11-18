@@ -7,7 +7,7 @@ A 2.5D side-scrolling platformer built with [Vue 3](https://vuejs.org), [TresJS]
 
 **[Play it in your browser](https://hayrullah-zafer-yilmaz.github.io/sprout-hop/)** · [Türkçe](docs/README.tr.md)
 
-![Sprout Hop gameplay: Sprout, a terracotta pot with a two-leaf sprout, pops a coin out of a crate, breaks a brick, stomps a purple slime, jumps over a pit and climbs stone stairs to collect coins](docs/assets/demo.gif)
+![Sprout Hop gameplay: Sprout, a terracotta pot with a two-leaf sprout, pops a coin out of a crate, breaks a brick, stomps a purple slug, jumps over a pit and climbs stone stairs to collect coins](docs/assets/demo.gif)
 
 ## Features
 
@@ -21,7 +21,7 @@ A 2.5D side-scrolling platformer built with [Vue 3](https://vuejs.org), [TresJS]
   - **Magma Mountain** is a path over a lava lake, about 210 tiles wide, with basalt columns, a plank bridge, a lift and a moving platform. Rocks fall from the sky: a growing shadow and crumbling pebbles mark where each one will land, and a rock that hits the hero costs a life. Behind it, a smoking volcano, drifting smoke, lava falls that pour out of the cliffs, and rising embers.
 - **Tuned platformer controls**: acceleration and braking, a run button, variable jump height, coyote time and jump buffering.
 - **Blocks you hit from below**: coin crates, life crates and breakable bricks.
-- **Two enemy types**: slimes you can stomp, with stomp combos, and spiky rollers you have to jump over.
+- **Two garden pests as enemies**: purple slugs you can stomp, with stomp combos, and spiky burrs that roll along and have to be jumped over.
 - **No asset files**: every texture is drawn on a canvas at startup and every sound is synthesized with the Web Audio API. Models are built from Three.js primitives, and the heroes' faces are drawn on a canvas too.
 - **Score, coins, lives and a timer**. Leftover time becomes bonus points, and the best score of each level is kept in `localStorage`.
 - **Keyboard and gamepad** input, a pause menu, and English and Turkish UI.
@@ -103,8 +103,8 @@ The levels are ASCII maps in [`src/game/levels/`](src/game/levels/), one file pe
 | `L`  | Life crate |
 | `-`  | One-way plank: you can jump through it from below |
 | `o`  | Coin |
-| `s`  | Slime |
-| `k`  | Spiky roller |
+| `s`  | Slug |
+| `k`  | Burr, a rolling spiky seed pod |
 | `^`  | Spikes |
 | `r`  | Falling rock: drops into this column again and again, after a warning |
 | `m` … `M` | Horizontal moving platform: start and end on the same row |

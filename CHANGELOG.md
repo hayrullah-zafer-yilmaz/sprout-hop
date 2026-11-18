@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.7.0 (2026-11-19)
+
+- Redesigned enemies that belong in the garden. The slimes are now purple slugs with eyes on stalks, dark spots and a pale foot. They stretch as they crawl, turn to face where they are going and squash flat when stomped.
+- The spiky rollers are now burrs: brown, spiky seed pods with cream-tipped thorns and a grumpy face. They bounce a little as they roll.
+- Both enemies share the heroes' thin outline and rim light.
+- The title tip and the map legend use the new names. In the code the enemy kinds are now `slug` and `burr`; the map characters `s` and `k` are unchanged.
+
 ## 0.6.0 (2026-11-19)
 
 - New hero designs that match the game's name. Each hero is a little flower pot with a sprout growing out of its soil, with big glossy eyes, blushing cheeks, stubby arms and feet.

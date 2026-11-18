@@ -13,7 +13,7 @@ export const PHYSICS = {
   stompBounceHeld: 18,
   deathBounce: 15,
   knockBounce: 9,
-  enemySpeed: { slime: 2, spiky: 1.5 },
+  enemySpeed: { slug: 2, burr: 1.5 },
   moverSpeed: 2.4,
   moverPause: 0.5,
 }
@@ -66,8 +66,8 @@ export const ROCKS = {
 
 export const SIZES = {
   player: { w: 0.72, h: 0.92 },
-  slime: { w: 0.86, h: 0.7 },
-  spiky: { w: 0.86, h: 0.8 },
+  slug: { w: 0.86, h: 0.7 },
+  burr: { w: 0.86, h: 0.8 },
   mover: { w: 3, h: 0.5 },
   rock: { w: 0.9, h: 0.9 },
   goalHeight: 9,
