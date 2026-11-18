@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.1 (2026-11-18)
+
+- The spikes under the plank before the checkpoint are now drawn. They were invisible, so the hero seemed to die for no reason.
+
 ## 0.2.0 (2026-11-18)
 
 - Hero selection with three heroes: Sprout is balanced, Zip runs the fastest, and Bun jumps the highest and glides while jump is held.

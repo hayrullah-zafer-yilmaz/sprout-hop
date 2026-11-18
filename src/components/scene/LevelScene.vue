@@ -11,6 +11,7 @@ import { PRIORITY, WORLD_KEY } from '../../scene/context'
 import CameraRig from './CameraRig.vue'
 import TileLayer from './TileLayer.vue'
 import CoinLayer from './CoinLayer.vue'
+import SpikeLayer from './SpikeLayer.vue'
 import MoverLayer from './MoverLayer.vue'
 import EnemyLayer from './EnemyLayer.vue'
 import CheckpointLayer from './CheckpointLayer.vue'
@@ -61,6 +62,7 @@ onBeforeRender(({ delta }) => {
 <template>
   <CameraRig />
   <TileLayer />
+  <SpikeLayer />
   <CoinLayer />
   <MoverLayer />
   <EnemyLayer />

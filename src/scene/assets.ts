@@ -100,6 +100,13 @@ export const debrisParts = {
   material: new MeshStandardMaterial({ map: getTileTextures().brick, roughness: 0.9 }),
 }
 
+export const spikeParts = {
+  cone: new ConeGeometry(0.11, 0.42, 6).translate(0, 0.21, 0),
+  plate: new BoxGeometry(1, 0.08, 1.5).translate(0, 0.04, 0),
+  steel: new MeshStandardMaterial({ color: '#cbd5e1', metalness: 0.55, roughness: 0.3, flatShading: true }),
+  base: new MeshStandardMaterial({ color: '#475569', roughness: 0.7 }),
+}
+
 export const slimeParts = {
   body: placed(new SphereGeometry(0.45, 24, 16), { position: [0, 0.32, 0], scale: [1.05, 0.75, 0.95] }),
   shine: placed(new SphereGeometry(0.08, 10, 8), { position: [-0.17, 0.5, 0.2], scale: [1, 0.6, 0.6] }),
