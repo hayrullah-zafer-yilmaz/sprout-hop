@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { CHARACTERS, type CharacterId } from '../src/game/characters'
 import { RULES } from '../src/game/config'
 import { NO_INPUT, type GameEvent, type InputState } from '../src/game/entities'
-import { LEVEL_ONE, Tile, parseLevel } from '../src/game/level'
+import { Tile, parseLevel } from '../src/game/level'
+import { LEVEL_IDS, levelNumber, loadLevel, nextLevel } from '../src/game/levels'
 import { World } from '../src/game/world'
 
 const STEP = 1 / 120
@@ -42,7 +43,7 @@ function events(world: World): GameEvent[] {
 
 describe('parseLevel', () => {
   it('reads the first level', () => {
-    const data = parseLevel(LEVEL_ONE)
+    const data = loadLevel('meadow')
     expect(data.width).toBe(224)
     expect(data.height).toBe(15)
     expect(data.start).toEqual({ x: 3, y: 2 })
@@ -54,16 +55,34 @@ describe('parseLevel', () => {
     expect(data.enemies.some((enemy) => enemy.kind === 'spiky')).toBe(true)
   })
 
-  it('keeps every ground gap jumpable', () => {
-    const data = parseLevel(LEVEL_ONE)
+  it('reads the waterfall level', () => {
+    const data = loadLevel('falls')
+    expect(data.height).toBe(15)
+    expect(data.start).toEqual({ x: 3, y: 2 })
+    expect(data.movers.map((mover) => mover.axis).sort()).toEqual(['x', 'y'])
+    expect(data.checkpoints).toHaveLength(1)
+    expect(data.coins.length).toBeGreaterThan(35)
+    expect(data.spikes.length).toBeGreaterThan(0)
+  })
+
+  it.each(LEVEL_IDS)('keeps every gap in %s at most twelve tiles wide', (id) => {
+    const data = loadLevel(id)
     let gap = 0
     let widest = 0
     for (let x = 0; x < data.width; x++) {
-      const solid = data.tiles[1 * data.width + x] === Tile.Ground
-      gap = solid ? 0 : gap + 1
+      const tile = data.tiles[1 * data.width + x]
+      const footing = tile === Tile.Ground || tile === Tile.Stone || tile === Tile.Plank
+      gap = footing ? 0 : gap + 1
       widest = Math.max(widest, gap)
     }
     expect(widest).toBeLessThanOrEqual(12)
+  })
+
+  it('orders the levels and knows which one comes next', () => {
+    expect(LEVEL_IDS).toEqual(['meadow', 'falls'])
+    expect(levelNumber('falls')).toBe(2)
+    expect(nextLevel('meadow')).toBe('falls')
+    expect(nextLevel('falls')).toBeNull()
   })
 
   it('rejects unknown characters and missing markers', () => {

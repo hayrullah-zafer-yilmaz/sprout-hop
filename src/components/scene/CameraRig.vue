@@ -3,7 +3,7 @@ import { shallowRef, watch } from 'vue'
 import { useLoop } from '@tresjs/core'
 import type { DirectionalLight, PerspectiveCamera } from 'three'
 import { ui } from '../../app/store'
-import { PRIORITY, useWorld } from '../../scene/context'
+import { PRIORITY, useTheme, useWorld } from '../../scene/context'
 
 const FOV = 42
 const DISTANCE = 16
@@ -16,6 +16,7 @@ const SHOWCASE = { zoom: 0.5, shift: 0.5, height: 0.85, tilt: 1.1 }
 const FOLLOW_RATE = { x: 7, y: 3.5, lookAhead: 2, zoom: 3 }
 
 const world = useWorld()
+const theme = useTheme()
 const camera = shallowRef<PerspectiveCamera>()
 const sun = shallowRef<DirectionalLight>()
 const view = { x: 0, y: 6.5, lead: 0, distance: DISTANCE, tilt: HEIGHT.tilt, ready: false }
@@ -86,5 +87,5 @@ onBeforeRender(({ delta }) => follow(Math.min(delta, 0.1)), PRIORITY.camera)
 
 <template>
   <TresPerspectiveCamera ref="camera" :fov="FOV" :near="0.5" :far="600" :position="[12, 9, DISTANCE]" />
-  <TresDirectionalLight ref="sun" color="#fff0d4" :intensity="2.4" cast-shadow />
+  <TresDirectionalLight ref="sun" :color="theme.sun.color" :intensity="theme.sun.intensity" cast-shadow />
 </template>

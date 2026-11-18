@@ -2,9 +2,9 @@
 import { markRaw, onBeforeUnmount } from 'vue'
 import { useLoop } from '@tresjs/core'
 import { TileMap } from '../../scene/tilemap'
-import { PRIORITY, useWorld } from '../../scene/context'
+import { PRIORITY, useTheme, useWorld } from '../../scene/context'
 
-const tiles = markRaw(new TileMap(useWorld()))
+const tiles = markRaw(new TileMap(useWorld(), useTheme().tiles))
 
 const { onBeforeRender } = useLoop()
 onBeforeRender(() => tiles.update(), PRIORITY.models)

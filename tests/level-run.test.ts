@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { CHARACTER_IDS } from '../src/game/characters'
 import { isSolid } from '../src/game/collision'
 import type { InputState } from '../src/game/entities'
-import { LEVEL_ONE, Tile, parseLevel } from '../src/game/level'
+import { Tile } from '../src/game/level'
+import { LEVEL_IDS, loadLevel } from '../src/game/levels'
 import { World } from '../src/game/world'
 
 const STEP = 1 / 120
@@ -21,7 +22,12 @@ function gapWidth(world: World, from: number, y: number): number {
   return width
 }
 
-function decide(world: World, held: { jump: number }): InputState {
+function gapWithin(world: World, from: number, distance: number, y: number): boolean {
+  for (let x = from; x < from + distance; x++) if (!groundAhead(world, x + 0.5, y)) return true
+  return false
+}
+
+function decide(world: World, held: { jump: number; still: number }): InputState {
   const p = world.player
   const front = p.x + p.w
   const feet = p.y
@@ -66,19 +72,21 @@ function decide(world: World, held: { jump: number }): InputState {
     } else if (wall || gap > 0 || enemy || spikes) {
       jump = true
       held.jump = 0.5
+      if (enemy && !wall && gap === 0 && gapWithin(world, Math.floor(front), 6, feet)) held.still = 0.9
     }
   } else if (p.platform === null && p.vy < 0) {
     const below = world.movers.find((item) => item.axis === 'x' && p.x + p.w > item.x && p.x < item.x + item.w)
     if (below) axis = 0
   }
 
+  if (held.still > 0 && !p.platform) axis = 0
   return { axis, jump, jumpPressed: jump && held.jump >= 0.29 && p.onGround, run: false }
 }
 
-describe('level one', () => {
+describe.each(LEVEL_IDS)('level %s', (levelId) => {
   it.each(CHARACTER_IDS)('can be finished by a simple bot playing %s', (character) => {
-    const world = new World(parseLevel(LEVEL_ONE), { character })
-    const held = { jump: 0 }
+    const world = new World(loadLevel(levelId), { character })
+    const held = { jump: 0, still: 0 }
     let wasJumping = false
     let seconds = 0
     while (seconds < 240 && world.phase !== 'complete' && world.phase !== 'gameover') {
@@ -87,6 +95,7 @@ describe('level one', () => {
       wasJumping = state.jump
       world.step(STEP, { ...state, jumpPressed: pressed })
       held.jump = Math.max(0, held.jump - STEP)
+      held.still = Math.max(0, held.still - STEP)
       seconds += STEP
     }
     expect(world.phase).toBe('complete')

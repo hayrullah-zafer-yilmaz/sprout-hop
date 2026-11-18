@@ -1,6 +1,6 @@
 import type { InputState } from '../game/entities'
 
-export type Action = 'confirm' | 'pause' | 'restart' | 'mute' | 'blur' | 'left' | 'right'
+export type Action = 'confirm' | 'pause' | 'restart' | 'mute' | 'blur' | 'left' | 'right' | 'up' | 'down'
 
 const KEYS = {
   left: ['ArrowLeft', 'KeyA'],
@@ -22,28 +22,36 @@ const ACTION_KEYS: Record<string, Action> = {
   KeyA: 'left',
   ArrowRight: 'right',
   KeyD: 'right',
+  ArrowUp: 'up',
+  KeyW: 'up',
+  ArrowDown: 'down',
+  KeyS: 'down',
 }
 
-const PAD_BUTTONS = { jump: 0, runA: 2, runB: 1, start: 9, left: 14, right: 15 }
+const PAD_BUTTONS = { jump: 0, runA: 2, runB: 1, start: 9, up: 12, down: 13, left: 14, right: 15 }
 const STICK_DEADZONE = 0.35
 
 interface PadState {
   axis: number
+  vertical: number
   jump: boolean
   run: boolean
   start: boolean
 }
 
-const IDLE_PAD: PadState = { axis: 0, jump: false, run: false, start: false }
+const IDLE_PAD: PadState = { axis: 0, vertical: 0, jump: false, run: false, start: false }
 
 function readGamepad(): PadState {
   const pad = navigator.getGamepads?.().find((item) => item?.connected)
   if (!pad) return IDLE_PAD
   const pressed = (button: number) => pad.buttons[button]?.pressed ?? false
   const dpad = (pressed(PAD_BUTTONS.right) ? 1 : 0) - (pressed(PAD_BUTTONS.left) ? 1 : 0)
+  const dpadVertical = (pressed(PAD_BUTTONS.down) ? 1 : 0) - (pressed(PAD_BUTTONS.up) ? 1 : 0)
   const stick = pad.axes[0] ?? 0
+  const stickVertical = pad.axes[1] ?? 0
   return {
     axis: dpad || (Math.abs(stick) > STICK_DEADZONE ? Math.sign(stick) : 0),
+    vertical: dpadVertical || (Math.abs(stickVertical) > STICK_DEADZONE ? Math.sign(stickVertical) : 0),
     jump: pressed(PAD_BUTTONS.jump),
     run: pressed(PAD_BUTTONS.runA) || pressed(PAD_BUTTONS.runB),
     start: pressed(PAD_BUTTONS.start),
@@ -106,6 +114,7 @@ export class InputController {
     this.pad = readGamepad()
     if (this.pad.start && !previous.start) this.dispatch('pause')
     if (this.pad.axis !== 0 && this.pad.axis !== previous.axis) this.dispatch(this.pad.axis < 0 ? 'left' : 'right')
+    if (this.pad.vertical !== 0 && this.pad.vertical !== previous.vertical) this.dispatch(this.pad.vertical < 0 ? 'up' : 'down')
     if (this.pad.jump && !previous.jump) {
       this.jumpQueued = true
       this.dispatch('confirm')

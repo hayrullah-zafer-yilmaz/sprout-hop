@@ -9,75 +9,19 @@ import {
   InstancedMesh,
   Mesh,
   MeshBasicMaterial,
-  MeshStandardMaterial,
   Object3D,
   PlaneGeometry,
-  type BufferGeometry,
   type Camera,
-  type Material,
-  type MeshStandardMaterialParameters,
 } from 'three'
 import { Tile, tileAt, type LevelData } from '../game/level'
+import { Batch, lowPoly, pick, type Placement } from './batch'
+import { buildFallsScenery, type Animated, type Scenery } from './falls'
 import { createRandom, createSkyTexture } from './textures'
-
-interface Placement {
-  x: number
-  y: number
-  z: number
-  sx: number
-  sy: number
-  sz: number
-  ry?: number
-  color?: string
-}
+import type { DecorPalette, Theme } from './themes'
 
 const MARGIN = 60
 const VALLEY = -11
 const CLOUD_SPEED = 0.6
-
-class Batch {
-  private readonly items: Placement[] = []
-  private readonly geometry: BufferGeometry
-  private readonly material: Material
-  private readonly castShadow: boolean
-
-  constructor(geometry: BufferGeometry, material: Material, castShadow = false) {
-    this.geometry = geometry
-    this.material = material
-    this.castShadow = castShadow
-  }
-
-  add(item: Placement): void {
-    this.items.push(item)
-  }
-
-  build(): InstancedMesh {
-    const mesh = new InstancedMesh(this.geometry, this.material, Math.max(1, this.items.length))
-    mesh.count = this.items.length
-    const dummy = new Object3D()
-    const color = new Color()
-    this.items.forEach((item, i) => {
-      dummy.position.set(item.x, item.y, item.z)
-      dummy.rotation.set(0, item.ry ?? 0, 0)
-      dummy.scale.set(item.sx, item.sy, item.sz)
-      dummy.updateMatrix()
-      mesh.setMatrixAt(i, dummy.matrix)
-      if (item.color) mesh.setColorAt(i, color.set(item.color))
-    })
-    mesh.castShadow = this.castShadow
-    mesh.receiveShadow = true
-    mesh.frustumCulled = false
-    return mesh
-  }
-}
-
-function lowPoly(color: string, options: MeshStandardMaterialParameters = {}): MeshStandardMaterial {
-  return new MeshStandardMaterial({ color, flatShading: true, roughness: 0.95, ...options })
-}
-
-function pick<T>(random: () => number, items: T[]): T {
-  return items[Math.floor(random() * items.length)]
-}
 
 function groundSurface(level: LevelData, x: number): number | null {
   for (let y = level.height - 1; y >= 0; y--) {
@@ -86,14 +30,14 @@ function groundSurface(level: LevelData, x: number): number | null {
   return null
 }
 
-export function buildDecorations(level: LevelData): Group {
-  const random = createRandom(2026)
-  const bushes = new Batch(new IcosahedronGeometry(0.42, 1), lowPoly('#3f9f46'), true)
-  const stems = new Batch(new CylinderGeometry(0.025, 0.025, 1, 5), lowPoly('#3b8d3a'))
+export function buildDecorations(level: LevelData, palette: DecorPalette, seed: number): Group {
+  const random = createRandom(seed)
+  const bushes = new Batch(new IcosahedronGeometry(0.42, 1), lowPoly(palette.bush), true)
+  const stems = new Batch(new CylinderGeometry(0.025, 0.025, 1, 5), lowPoly(palette.stem))
   const flowers = new Batch(new IcosahedronGeometry(0.09, 0), lowPoly('#ffffff', { roughness: 0.6 }))
-  const tufts = new Batch(new ConeGeometry(0.06, 1, 4), lowPoly('#4caf45'))
-  const rocks = new Batch(new IcosahedronGeometry(0.22, 0), lowPoly('#9aa3ad'), true)
-  const petals = ['#ffd23f', '#ff6b8b', '#ffffff', '#9b7bff', '#ff9f43']
+  const tufts = new Batch(new ConeGeometry(0.06, 1, 4), lowPoly(palette.tuft))
+  const rocks = new Batch(new IcosahedronGeometry(0.22, 0), lowPoly(palette.rock), true)
+  const petals = palette.petals
   const reserved = new Set([...level.spikes, ...level.checkpoints, level.goal].map((spawn) => spawn.x))
 
   for (let x = 0; x < level.width; x++) {
@@ -132,10 +76,10 @@ export function buildDecorations(level: LevelData): Group {
   return group
 }
 
-function createSky(): Mesh {
+function createSky(colors: Theme['sky']): Mesh {
   const sky = new Mesh(
     new PlaneGeometry(900, 260),
-    new MeshBasicMaterial({ map: createSkyTexture(), fog: false, depthWrite: false }),
+    new MeshBasicMaterial({ map: createSkyTexture(colors), fog: false, depthWrite: false }),
   )
   sky.position.z = -200
   sky.renderOrder = -10
@@ -191,7 +135,7 @@ function createHills(random: () => number, left: number, right: number): Instanc
   return hills.build()
 }
 
-function createMountains(random: () => number, left: number, right: number): InstancedMesh[] {
+function createMountains(random: () => number, left: number, right: number, colors: [string, string]): InstancedMesh[] {
   const peaks = new Batch(new ConeGeometry(1, 1, 6), lowPoly('#ffffff'))
   const caps = new Batch(new ConeGeometry(1, 1, 6), lowPoly('#f4f8ff'))
   for (let x = left - 40; x < right + 40; x += 26 + random() * 20) {
@@ -199,7 +143,7 @@ function createMountains(random: () => number, left: number, right: number): Ins
     const height = 30 + random() * 22
     const z = -95 - random() * 30
     const ry = random() * Math.PI
-    const color = random() > 0.5 ? '#8ea9cc' : '#9db4d4'
+    const color = random() > 0.5 ? colors[0] : colors[1]
     peaks.add({ x, y: -10 + height / 2, z, sx: radius, sy: height, sz: radius, ry, color })
     caps.add({ x, y: -10 + height * 0.86, z: z + 0.2, sx: radius * 0.29, sy: height * 0.29, sz: radius * 0.29, ry })
   }
@@ -263,32 +207,49 @@ class CloudField {
   }
 }
 
+function buildMeadowScenery(random: () => number, left: number, right: number, levelWidth: number): Scenery {
+  const valley = new Mesh(new BoxGeometry(right - left + 200, 2, 90), lowPoly('#4f9e4a'))
+  valley.position.set(levelWidth / 2, VALLEY - 1, -40)
+  valley.receiveShadow = true
+  const forest = createForest(random, left, right)
+  const hills = createHills(random, left, right)
+  const mountains = createMountains(random, left, right, ['#8ea9cc', '#9db4d4'])
+  return { objects: [valley, ...forest, hills, ...mountains], animated: [] }
+}
+
+function buildWaterfallScenery(random: () => number, left: number, right: number, levelWidth: number): Scenery {
+  const mountains = createMountains(random, left, right, ['#8fa9bd', '#a2b8c6'])
+  const falls = buildFallsScenery(random, left, right, levelWidth)
+  return { objects: [...mountains, ...falls.objects], animated: falls.animated }
+}
+
 export class Backdrop {
   readonly group = new Group()
-  private readonly sky = createSky()
+  private readonly sky: Mesh
   private readonly sun = createSun()
   private readonly clouds: CloudField
+  private readonly animated: Animated[]
 
-  constructor(level: LevelData) {
-    const random = createRandom(77)
+  constructor(level: LevelData, theme: Theme) {
+    const random = createRandom(theme.seeds.backdrop)
     const left = -MARGIN
     const right = level.width + MARGIN
-    const valley = new Mesh(new BoxGeometry(right - left + 200, 2, 90), lowPoly('#4f9e4a'))
-    valley.position.set(level.width / 2, VALLEY - 1, -40)
-    valley.receiveShadow = true
-    const forest = createForest(random, left, right)
-    const hills = createHills(random, left, right)
-    const mountains = createMountains(random, left, right)
+    const build = theme.backdrop === 'falls' ? buildWaterfallScenery : buildMeadowScenery
+    const scenery = build(random, left, right, level.width)
+    this.sky = createSky(theme.sky)
     this.clouds = new CloudField(random, left, right)
+    this.animated = scenery.animated
     this.group.name = 'backdrop'
-    this.group.add(this.sky, this.sun, valley, ...forest, hills, ...mountains, this.clouds.mesh)
+    this.group.add(this.sky, this.sun, ...scenery.objects, this.clouds.mesh)
   }
 
   update(camera: Camera | undefined, delta: number): void {
+    const dt = Math.min(delta, 0.1)
     if (camera) {
       this.sky.position.set(camera.position.x, camera.position.y + 12, this.sky.position.z)
       this.sun.position.set(camera.position.x + 55, camera.position.y + 34, this.sun.position.z)
     }
-    this.clouds.drift(Math.min(delta, 0.1) * CLOUD_SPEED)
+    this.clouds.drift(dt * CLOUD_SPEED)
+    for (const item of this.animated) item.update(dt)
   }
 }

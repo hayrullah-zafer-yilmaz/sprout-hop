@@ -1,0 +1,17 @@
+export const FALLS = [
+  '',
+  '',
+  '                                                                             L',
+  '',
+  '',
+  '                                                                           ooooo                            C',
+  '                   ooo                                                  V  XXXXX                                                   ooo   ooo',
+  '                  o   o                                                                   o o o o                                                    oooo                          X',
+  '                               ooo   ooo                                                                  o   o                                                                   XX',
+  '           C       BCB                          C                                                         BCBCB                                      ----                        XXX',
+  '       ooo                                             o o o o        X                  m      M                     oo                                                        XXXX',
+  '                                                                     XX                                                         XXXX  XXXX  XXXX                               XXXXX',
+  '   P                        XXXX  XXXX  XXXX  s           s       k XXX v           K                   s         s             XXXX  XXXX  XXXX      ^^      s   s           XXXXXX        F',
+  '##############  ##########  XXXX  XXXX  XXXX##########--------######XXX#################            ##########################  XXXX  XXXX  XXXX######################   #####XXXXXX####################',
+  '##############  ##########  XXXX  XXXX  XXXX##########        ######XXX#################            ##########################  XXXX  XXXX  XXXX######################   #####XXXXXX####################',
+]

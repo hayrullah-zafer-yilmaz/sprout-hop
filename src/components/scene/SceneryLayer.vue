@@ -4,11 +4,12 @@ import { dispose, useLoop } from '@tresjs/core'
 import type { LevelData } from '../../game/level'
 import { Backdrop, buildDecorations } from '../../scene/scenery'
 import { PRIORITY } from '../../scene/context'
+import type { Theme } from '../../scene/themes'
 
-const props = defineProps<{ level: LevelData }>()
+const props = defineProps<{ level: LevelData; theme: Theme }>()
 
-const backdrop = markRaw(new Backdrop(props.level))
-const decorations = markRaw(buildDecorations(props.level))
+const backdrop = markRaw(new Backdrop(props.level, props.theme))
+const decorations = markRaw(buildDecorations(props.level, props.theme.decor, props.theme.seeds.decor))
 
 const { onBeforeRender } = useLoop()
 onBeforeRender(({ camera, delta }) => backdrop.update(camera.value, delta), PRIORITY.backdrop)
@@ -20,8 +21,8 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <TresFog :args="['#d6ecff', 45, 210]" />
-  <TresHemisphereLight :args="['#e3f2ff', '#5b7a3c', 1.5]" />
+  <TresFog :args="[theme.fog.color, theme.fog.near, theme.fog.far]" />
+  <TresHemisphereLight :args="[theme.hemisphere.sky, theme.hemisphere.ground, theme.hemisphere.intensity]" />
   <primitive :object="backdrop.group" />
   <primitive :object="decorations" />
 </template>

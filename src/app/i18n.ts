@@ -1,8 +1,12 @@
 export type Locale = 'en' | 'tr'
 
 const en = {
-  tagline: 'A 2.5D platformer level built with Vue 3 and TresJS',
-  level: 'Level 1 · Sunny Meadow',
+  tagline: 'A 2.5D platformer built with Vue 3 and TresJS',
+  levelWord: 'Level',
+  levelNames: { meadow: 'Sunny Meadow', falls: 'Misty Falls' },
+  levelPicker: 'Level',
+  nextLevel: 'Next level',
+  finalText: 'You cleared the last level. Well played!',
   play: 'Play',
   startHint: 'Press Enter to start',
   touchNotice: 'Sprout Hop is played with a keyboard or a gamepad. Open it on a computer for the best experience.',
@@ -36,7 +40,7 @@ const en = {
   language: 'Language',
   builtWith: 'Built with Vue 3, TresJS and Three.js',
   chooseHero: 'Choose your hero',
-  chooseHint: 'Use ← → to choose and Enter to start.',
+  chooseHint: 'Use ← → for the hero, ↑ ↓ for the level and Enter to start.',
   start: 'Start',
   back: 'Back',
   changeHero: 'Change hero',
@@ -52,8 +56,12 @@ const en = {
 export type Messages = typeof en
 
 const tr: Messages = {
-  tagline: 'Vue 3 ve TresJS ile yapılmış 2.5D platform oyunu bölümü',
-  level: 'Bölüm 1 · Güneşli Çayır',
+  tagline: 'Vue 3 ve TresJS ile yapılmış 2.5D platform oyunu',
+  levelWord: 'Bölüm',
+  levelNames: { meadow: 'Güneşli Çayır', falls: 'Sisli Şelale' },
+  levelPicker: 'Bölüm',
+  nextLevel: 'Sonraki bölüm',
+  finalText: 'Son bölümü de bitirdiniz. Tebrikler!',
   play: 'Oyna',
   startHint: 'Başlamak için Enter tuşuna basın',
   touchNotice: 'Sprout Hop klavye veya oyun kumandasıyla oynanır. En iyi deneyim için bir bilgisayarda açın.',
@@ -88,7 +96,7 @@ const tr: Messages = {
   language: 'Dil',
   builtWith: 'Vue 3, TresJS ve Three.js ile yapıldı',
   chooseHero: 'Kahramanınızı seçin',
-  chooseHint: 'Seçmek için ← → tuşlarını, başlamak için Enter tuşunu kullanın.',
+  chooseHint: 'Kahraman için ← →, bölüm için ↑ ↓ tuşlarını, başlamak için Enter tuşunu kullanın.',
   start: 'Başla',
   back: 'Geri',
   changeHero: 'Kahraman değiştir',

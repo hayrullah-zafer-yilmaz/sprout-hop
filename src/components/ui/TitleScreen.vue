@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { formatScore } from '../../app/format'
 import type { Locale } from '../../app/i18n'
-import { openHeroSelect, setLocale, t, toggleMute, ui } from '../../app/store'
+import { best, levelTitle, openHeroSelect, setLocale, t, toggleMute, ui } from '../../app/store'
 import CharacterPortrait from './CharacterPortrait.vue'
 import { vAutofocus } from './autofocus'
 
@@ -35,7 +35,7 @@ const controls = computed(() => [
 
     <div class="start">
       <div>
-        <span class="eyebrow">{{ t.level }}</span>
+        <span class="eyebrow">{{ levelTitle }}</span>
         <p class="hint">{{ t.startHint }}</p>
       </div>
       <button v-autofocus class="button button-primary" type="button" @click="openHeroSelect">
@@ -79,7 +79,7 @@ const controls = computed(() => [
       <button class="button button-ghost" type="button" @click="toggleMute">
         {{ ui.muted ? t.soundOff : t.soundOn }}
       </button>
-      <span v-if="ui.best > 0" class="best">{{ t.best }}: {{ formatScore(ui.best) }}</span>
+      <span v-if="best > 0" class="best">{{ t.best }}: {{ formatScore(best) }}</span>
       <span class="built">{{ t.builtWith }}</span>
     </footer>
   </section>

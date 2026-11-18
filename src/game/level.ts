@@ -46,24 +46,6 @@ export function tileAt(level: LevelData, x: number, y: number): TileId {
   return level.tiles[y * level.width + x] as TileId
 }
 
-export const LEVEL_ONE = [
-  '',
-  '                                                                                                                                    L',
-  '',
-  '                                                                                                                                 o    o',
-  '                     o o                                                          oooo                                            oooo',
-  '                      L                                         ooo               ----                                      V    XXXXXX                               C                          X',
-  '                                                oo                                                                                                                                              XX',
-  '                                                                ---                     oooo                o o o o                                       oo                                   XXX',
-  '                                                               o               oo oo                                                              oo                              o           XXXX',
-  '                C   BCBCB         oo           X  X                           BBBCBBBB ------                                             oo              XX        BCBCB       ooo          XXXXX',
-  '         ooo                     o  o         XX  XX          ---                                         m      M                                XX      XX                                XXXXXX',
-  '                                             XXX  XXX                                                                       v             XX      XX      XX                               XXXXXXX',
-  '   P                         s          s   XXXX  XXXX   s                  k           ^^^^   s   K                     s                XX  s   XX  s   XX    k           s             XXXXXXXX       F',
-  '###################################  ###########  ###########      ######################################            ############################################################   ############################################',
-  '###################################  ###########  ###########      ######################################            ############################################################   ############################################',
-]
-
 const tileChars: Record<string, TileId> = {
   '#': Tile.Ground,
   X: Tile.Stone,

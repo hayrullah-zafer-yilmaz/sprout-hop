@@ -7,7 +7,8 @@ import { World } from '../../game/world'
 import { sounds } from '../../app/audio'
 import { input } from '../../app/input'
 import { endGame, finishLevel, syncHud, ui } from '../../app/store'
-import { PRIORITY, WORLD_KEY } from '../../scene/context'
+import { PRIORITY, THEME_KEY, WORLD_KEY } from '../../scene/context'
+import type { Theme } from '../../scene/themes'
 import CameraRig from './CameraRig.vue'
 import TileLayer from './TileLayer.vue'
 import CoinLayer from './CoinLayer.vue'
@@ -22,10 +23,11 @@ import PlayerModel from './PlayerModel.vue'
 const MAX_FRAME_TIME = 1 / 20
 const MAX_STEP = 1 / 120
 
-const props = defineProps<{ level: LevelData }>()
+const props = defineProps<{ level: LevelData; theme: Theme }>()
 
 const world = markRaw(new World(props.level, { character: ui.character }))
 provide(WORLD_KEY, world)
+provide(THEME_KEY, props.theme)
 watch(
   () => ui.character,
   (character) => world.setCharacter(character),

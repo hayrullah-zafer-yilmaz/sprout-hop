@@ -1,23 +1,24 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { formatScore } from '../../app/format'
-import { changeHero, restart, t, ui } from '../../app/store'
+import { best, changeHero, playNextLevel, restart, t, ui, upcomingLevel } from '../../app/store'
 import { vAutofocus } from './autofocus'
 
 const props = defineProps<{ outcome: 'gameover' | 'complete' }>()
 
-const copy = computed(() =>
-  props.outcome === 'complete'
-    ? { title: t.value.complete, text: t.value.completeText, action: t.value.playAgain }
-    : { title: t.value.gameOver, text: t.value.gameOverText, action: t.value.tryAgain },
-)
+const advance = computed(() => props.outcome === 'complete' && upcomingLevel.value !== null)
+
+const copy = computed(() => {
+  if (props.outcome === 'gameover') return { title: t.value.gameOver, text: t.value.gameOverText }
+  return { title: t.value.complete, text: advance.value ? t.value.completeText : t.value.finalText }
+})
 
 const stats = computed(() => {
   const score = { label: t.value.score, value: formatScore(ui.score) }
   const coins = { label: t.value.coins, value: `${ui.coins} / ${ui.totalCoins}` }
   const lives = { label: t.value.lives, value: String(ui.lives) }
-  const best = { label: t.value.best, value: formatScore(ui.best) }
-  return props.outcome === 'complete' ? [score, coins, lives, best] : [score, coins, best]
+  const record = { label: t.value.best, value: formatScore(best.value) }
+  return props.outcome === 'complete' ? [score, coins, lives, record] : [score, coins, record]
 })
 </script>
 
@@ -33,7 +34,10 @@ const stats = computed(() => {
       </div>
     </dl>
     <div class="actions">
-      <button v-autofocus class="button button-primary" type="button" @click="restart">{{ copy.action }}</button>
+      <button v-if="advance" v-autofocus class="button button-primary" type="button" @click="playNextLevel">{{ t.nextLevel }}</button>
+      <button v-autofocus="!advance" class="button" :class="advance ? 'button-ghost' : 'button-primary'" type="button" @click="restart">
+        {{ outcome === 'gameover' ? t.tryAgain : t.playAgain }}
+      </button>
       <button class="button button-ghost" type="button" @click="changeHero">{{ t.changeHero }}</button>
     </div>
   </section>

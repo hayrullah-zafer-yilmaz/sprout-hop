@@ -11,7 +11,7 @@ import {
 import { EFFECTS } from '../game/config'
 import { Tile, type TileId } from '../game/level'
 import type { World } from '../game/world'
-import { getTileTextures } from './textures'
+import { getTileTextures, type TilePalette } from './textures'
 
 type Kind = 'grass' | 'dirt' | 'stone' | 'brick' | 'crate' | 'life' | 'used' | 'plank'
 
@@ -61,17 +61,18 @@ function boxWithDepth(width: number, height: number, depth: number): BoxGeometry
   return geometry
 }
 
-let sharedAssets: TileAssets | null = null
+const sharedAssets = new Map<TilePalette, TileAssets>()
 
-function getTileAssets(): TileAssets {
-  if (sharedAssets) return sharedAssets
-  const textures = getTileTextures()
+function getTileAssets(palette: TilePalette): TileAssets {
+  const cached = sharedAssets.get(palette)
+  if (cached) return cached
+  const textures = getTileTextures(palette)
   const paint = (map: Texture, emissive = '#000000') => new MeshStandardMaterial({ map, roughness: 0.92, emissive })
   const ground = boxWithDepth(1, 1, GROUND_DEPTH)
   const block = new BoxGeometry(1, 1, 1)
   const dirt = paint(textures.dirt)
   const grassSide = paint(textures.grassSide)
-  sharedAssets = {
+  const assets: TileAssets = {
     geometry: {
       grass: ground,
       dirt: ground,
@@ -93,20 +94,23 @@ function getTileAssets(): TileAssets {
       plank: paint(textures.plank),
     },
   }
-  return sharedAssets
+  sharedAssets.set(palette, assets)
+  return assets
 }
 
 export class TileMap {
   readonly group = new Group()
   private readonly world: World
+  private readonly palette: TilePalette
   private readonly meshes = {} as Record<Kind, InstancedMesh>
   private readonly entries = new Map<number, Entry>()
   private readonly matrix = new Matrix4()
   private lifted = new Set<number>()
   private lifting = new Set<number>()
 
-  constructor(world: World) {
+  constructor(world: World, palette: TilePalette) {
     this.world = world
+    this.palette = palette
     this.group.name = 'tiles'
     const tiles = this.tilePlacements()
     const scenery = [...this.edgePlacements(), ...this.cliffPlacements()]
@@ -176,7 +180,7 @@ export class TileMap {
   }
 
   private createMeshes(capacity: Record<Kind, number>): void {
-    const assets = getTileAssets()
+    const assets = getTileAssets(this.palette)
     for (const kind of KINDS) {
       const mesh = new InstancedMesh(assets.geometry[kind], assets.material[kind], Math.max(1, capacity[kind]))
       mesh.name = kind

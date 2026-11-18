@@ -7,6 +7,7 @@ import { input, type Action } from './app/input'
 import {
   backToTitle,
   cycleHero,
+  cycleLevel,
   openHeroSelect,
   pauseIfPlaying,
   restart,
@@ -47,6 +48,10 @@ function handle(action: Action): void {
     case 'left':
     case 'right':
       if (ui.screen === 'select') cycleHero(action === 'left' ? -1 : 1)
+      break
+    case 'up':
+    case 'down':
+      if (ui.screen === 'select') cycleLevel(action === 'up' ? -1 : 1)
       break
   }
 }

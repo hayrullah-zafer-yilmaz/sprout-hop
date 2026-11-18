@@ -11,6 +11,23 @@ const SIZE = 32
 
 type Draw = (ctx: CanvasRenderingContext2D, random: () => number) => void
 
+export interface TilePalette {
+  grass: string
+  grassSpeckles: string[]
+  grassEdge: string
+  grassHighlight: string
+  dirt: string
+  dirtSpeckles: string[]
+  pebble: string
+  pebbleShade: string
+  stone: string
+  stoneSpeckles: string[]
+  stoneLight: string
+  stoneDark: string
+  stoneSeam: string
+  stoneSeamLight: string
+}
+
 export function createRandom(seed: number): () => number {
   let state = seed >>> 0
   return () => {
@@ -66,39 +83,39 @@ function bevel(ctx: CanvasRenderingContext2D, light: string, dark: string, width
   fill(ctx, dark, SIZE - width, 0, width, SIZE)
 }
 
-function drawDirt(ctx: CanvasRenderingContext2D, random: () => number): void {
-  fill(ctx, '#8b5a3c')
-  speckle(ctx, random, ['#74482d', '#9d6a46', '#7d5034'], 110)
+function drawDirt(ctx: CanvasRenderingContext2D, random: () => number, palette: TilePalette): void {
+  fill(ctx, palette.dirt)
+  speckle(ctx, random, palette.dirtSpeckles, 110)
   for (let i = 0; i < 5; i++) {
     const x = Math.floor(random() * (SIZE - 3))
     const y = Math.floor(random() * (SIZE - 2))
-    fill(ctx, '#b98a64', x, y, 3, 2)
-    fill(ctx, '#6b4229', x, y + 2, 3, 1)
+    fill(ctx, palette.pebble, x, y, 3, 2)
+    fill(ctx, palette.pebbleShade, x, y + 2, 3, 1)
   }
 }
 
-function drawGrassTop(ctx: CanvasRenderingContext2D, random: () => number): void {
-  fill(ctx, '#5bbf4f')
-  speckle(ctx, random, ['#4caa42', '#74d265', '#66c95a', '#8ee07f'], 160)
+function drawGrassTop(ctx: CanvasRenderingContext2D, random: () => number, palette: TilePalette): void {
+  fill(ctx, palette.grass)
+  speckle(ctx, random, palette.grassSpeckles, 160)
 }
 
-function drawGrassSide(ctx: CanvasRenderingContext2D, random: () => number): void {
-  drawDirt(ctx, random)
+function drawGrassSide(ctx: CanvasRenderingContext2D, random: () => number, palette: TilePalette): void {
+  drawDirt(ctx, random, palette)
   for (let x = 0; x < SIZE; x++) {
     const depth = 7 + Math.floor(random() * 4) + (x % 5 === 0 ? 2 : 0)
-    fill(ctx, '#5bbf4f', x, 0, 1, depth)
-    fill(ctx, '#3f9a38', x, depth, 1, 1)
+    fill(ctx, palette.grass, x, 0, 1, depth)
+    fill(ctx, palette.grassEdge, x, depth, 1, 1)
   }
-  fill(ctx, '#8ee07f', 0, 0, SIZE, 1)
-  speckle(ctx, random, ['#4caa42', '#74d265'], 40, { x: 0, y: 1, w: SIZE, h: 6 })
+  fill(ctx, palette.grassHighlight, 0, 0, SIZE, 1)
+  speckle(ctx, random, palette.grassSpeckles.slice(0, 2), 40, { x: 0, y: 1, w: SIZE, h: 6 })
 }
 
-function drawStone(ctx: CanvasRenderingContext2D, random: () => number): void {
-  fill(ctx, '#a3acb6')
-  speckle(ctx, random, ['#949ea9', '#b3bbc4', '#8b95a0'], 90)
-  bevel(ctx, '#cbd2d9', '#6f7882')
-  fill(ctx, '#8f99a4', 6, 15, 20, 1)
-  fill(ctx, '#bcc4cc', 6, 16, 20, 1)
+function drawStone(ctx: CanvasRenderingContext2D, random: () => number, palette: TilePalette): void {
+  fill(ctx, palette.stone)
+  speckle(ctx, random, palette.stoneSpeckles, 90)
+  bevel(ctx, palette.stoneLight, palette.stoneDark)
+  fill(ctx, palette.stoneSeam, 6, 15, 20, 1)
+  fill(ctx, palette.stoneSeamLight, 6, 16, 20, 1)
 }
 
 function drawBrick(ctx: CanvasRenderingContext2D, random: () => number): void {
@@ -228,16 +245,16 @@ export function createBannerTexture(): CanvasTexture {
   })
 }
 
-export function createSkyTexture(): CanvasTexture {
+export function createSkyTexture([top, middle, horizon]: [string, string, string]): CanvasTexture {
   const canvas = document.createElement('canvas')
   canvas.width = 4
   canvas.height = 256
   const ctx = canvas.getContext('2d')
   if (!ctx) throw new Error('Canvas 2D is not available')
   const gradient = ctx.createLinearGradient(0, 0, 0, 256)
-  gradient.addColorStop(0, '#3f8fe0')
-  gradient.addColorStop(0.55, '#8cc8ff')
-  gradient.addColorStop(1, '#dff1ff')
+  gradient.addColorStop(0, top)
+  gradient.addColorStop(0.55, middle)
+  gradient.addColorStop(1, horizon)
   ctx.fillStyle = gradient
   ctx.fillRect(0, 0, 4, 256)
   const texture = new CanvasTexture(canvas)
@@ -259,23 +276,109 @@ export interface TileTextures {
   plank: CanvasTexture
 }
 
-let tileTextures: TileTextures | null = null
-
-export function getTileTextures(): TileTextures {
-  tileTextures ??= createTileTextures()
-  return tileTextures
+interface SharedTextures {
+  brick: CanvasTexture
+  crate: CanvasTexture
+  lifeCrate: CanvasTexture
+  used: CanvasTexture
+  plank: CanvasTexture
 }
 
-function createTileTextures(): TileTextures {
-  return {
-    dirt: pixelTexture(11, drawDirt),
-    grassTop: pixelTexture(12, drawGrassTop),
-    grassSide: pixelTexture(13, drawGrassSide),
-    stone: pixelTexture(14, drawStone),
+let sharedTextures: SharedTextures | null = null
+const themedTextures = new Map<TilePalette, TileTextures>()
+
+function getSharedTextures(): SharedTextures {
+  sharedTextures ??= {
     brick: pixelTexture(15, drawBrick),
     crate: pixelTexture(16, drawCrate),
     lifeCrate: pixelTexture(17, drawLifeCrate),
     used: pixelTexture(18, drawUsed),
     plank: pixelTexture(19, drawPlank),
   }
+  return sharedTextures
+}
+
+export function getBrickTexture(): CanvasTexture {
+  return getSharedTextures().brick
+}
+
+export function getTileTextures(palette: TilePalette): TileTextures {
+  let textures = themedTextures.get(palette)
+  if (!textures) {
+    textures = {
+      ...getSharedTextures(),
+      dirt: pixelTexture(11, (ctx, random) => drawDirt(ctx, random, palette)),
+      grassTop: pixelTexture(12, (ctx, random) => drawGrassTop(ctx, random, palette)),
+      grassSide: pixelTexture(13, (ctx, random) => drawGrassSide(ctx, random, palette)),
+      stone: pixelTexture(14, (ctx, random) => drawStone(ctx, random, palette)),
+    }
+    themedTextures.set(palette, textures)
+  }
+  return textures
+}
+
+function canvasTexture(width: number, height: number, draw: (ctx: CanvasRenderingContext2D) => void): CanvasTexture {
+  const canvas = document.createElement('canvas')
+  canvas.width = width
+  canvas.height = height
+  const ctx = canvas.getContext('2d')
+  if (!ctx) throw new Error('Canvas 2D is not available')
+  draw(ctx)
+  const texture = new CanvasTexture(canvas)
+  texture.colorSpace = SRGBColorSpace
+  texture.wrapS = RepeatWrapping
+  texture.wrapT = RepeatWrapping
+  return texture
+}
+
+export function createWaterfallTexture(seed: number): CanvasTexture {
+  const random = createRandom(seed)
+  const width = 64
+  const height = 256
+  return canvasTexture(width, height, (ctx) => {
+    for (let x = 0; x < width; x++) {
+      const edge = Math.min(1, x / 10, (width - 1 - x) / 10)
+      ctx.fillStyle = `rgba(178, 225, 242, ${0.62 * edge})`
+      ctx.fillRect(x, 0, 1, height)
+    }
+    for (let i = 0; i < 160; i++) {
+      const x = Math.floor(random() * width)
+      const edge = Math.min(1, x / 10, (width - 1 - x) / 10)
+      const length = 24 + random() * 90
+      const y = random() * height
+      const light = random() > 0.3
+      ctx.fillStyle = light ? `rgba(255, 255, 255, ${(0.45 + random() * 0.5) * edge})` : `rgba(96, 168, 204, ${0.5 * edge})`
+      ctx.fillRect(x, y, random() > 0.6 ? 2 : 1, length)
+      ctx.fillRect(x, y - height, random() > 0.6 ? 2 : 1, length)
+    }
+  })
+}
+
+export function createRippleTexture(): CanvasTexture {
+  const random = createRandom(31)
+  const size = 128
+  return canvasTexture(size, size, (ctx) => {
+    ctx.fillStyle = '#3d8fb9'
+    ctx.fillRect(0, 0, size, size)
+    for (let i = 0; i < 90; i++) {
+      const x = random() * size
+      const y = random() * size
+      const length = 8 + random() * 26
+      ctx.fillStyle = random() > 0.4 ? 'rgba(160, 220, 240, 0.55)' : 'rgba(40, 110, 150, 0.6)'
+      ctx.fillRect(x, y, length, 1.5)
+      ctx.fillRect(x - size, y, length, 1.5)
+    }
+  })
+}
+
+export function createSoftDotTexture(): CanvasTexture {
+  const size = 64
+  return canvasTexture(size, size, (ctx) => {
+    const gradient = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2)
+    gradient.addColorStop(0, 'rgba(255, 255, 255, 0.9)')
+    gradient.addColorStop(0.45, 'rgba(255, 255, 255, 0.35)')
+    gradient.addColorStop(1, 'rgba(255, 255, 255, 0)')
+    ctx.fillStyle = gradient
+    ctx.fillRect(0, 0, size, size)
+  })
 }

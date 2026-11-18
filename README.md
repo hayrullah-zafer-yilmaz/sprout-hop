@@ -3,7 +3,7 @@
 [![CI](https://github.com/hayrullah-zafer-yilmaz/sprout-hop/actions/workflows/ci.yml/badge.svg)](https://github.com/hayrullah-zafer-yilmaz/sprout-hop/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-A 2.5D side-scrolling platformer level built with [Vue 3](https://vuejs.org), [TresJS](https://tresjs.org) and [Three.js](https://threejs.org). The world is fully 3D, with depth, parallax and real shadows. Gameplay stays on a single 2D plane.
+A 2.5D side-scrolling platformer built with [Vue 3](https://vuejs.org), [TresJS](https://tresjs.org) and [Three.js](https://threejs.org). The world is fully 3D, with depth, parallax and real shadows. Gameplay stays on a single 2D plane.
 
 **[Play it in your browser](https://hayrullah-zafer-yilmaz.github.io/sprout-hop/)** · [Türkçe](docs/README.tr.md)
 
@@ -12,26 +12,31 @@ A 2.5D side-scrolling platformer level built with [Vue 3](https://vuejs.org), [T
 ## Features
 
 - **Three heroes to choose from**: Sprout is balanced, Zip runs the fastest, and Bun jumps the highest and glides while you hold jump. A live 3D preview shows the hero you pick.
-- **One full level**, about 220 tiles wide, with pits, stairs, one-way planks, spikes, a checkpoint, a horizontal and a vertical moving platform, and a flag at the end.
+- **Two levels**, each with its own look and its own best score. When you finish a level, a button takes you to the next one, and the hero screen lets you pick either level.
+  - **Sunny Meadow** is about 220 tiles wide, with pits, stairs, one-way planks, spikes, a checkpoint, a horizontal and a vertical moving platform, and a flag at the end.
+  - **Misty Falls** is a river canyon about 200 tiles wide, with stepping stones, a wooden bridge, a lift and a moving platform over the river. In the background, three waterfalls pour into the river, with rising mist, foam and a rainbow.
 - **Tuned platformer controls**: acceleration and braking, a run button, variable jump height, coyote time and jump buffering.
 - **Blocks you hit from below**: coin crates, life crates and breakable bricks.
 - **Two enemy types**: slimes you can stomp, with stomp combos, and spiky rollers you have to jump over.
 - **No asset files**: every texture is drawn on a canvas at startup and every sound is synthesized with the Web Audio API. Models are built from Three.js primitives.
-- **Score, coins, lives and a timer**. Leftover time becomes bonus points, and the best score is kept in `localStorage`.
+- **Score, coins, lives and a timer**. Leftover time becomes bonus points, and the best score of each level is kept in `localStorage`.
 - **Keyboard and gamepad** input, a pause menu, and English and Turkish UI.
+
+![Misty Falls: Zip, the yellow hero, pops coins out of two crates in front of a waterfall and a faint rainbow, then hops across stone columns over the river](docs/assets/misty-falls.gif)
 
 ## Controls
 
-| Action      | Keyboard                       | Gamepad           |
-| ----------- | ------------------------------ | ----------------- |
-| Choose hero | `←` `→` on the hero screen     | Left stick, D-pad |
-| Move        | `←` `→` or `A` `D`             | Left stick, D-pad |
-| Jump        | `Space`, `W` or `↑`            | `A`               |
-| Glide (Bun) | Hold jump while falling        | Hold `A`          |
-| Run         | `Shift`                        | `X`               |
-| Pause       | `Esc` or `P`                   | `Start`           |
-| Restart     | `R`                            |                   |
-| Sound       | `M`                            |                   |
+| Action       | Keyboard                       | Gamepad           |
+| ------------ | ------------------------------ | ----------------- |
+| Choose hero  | `←` `→` on the hero screen     | Left stick, D-pad |
+| Choose level | `↑` `↓` on the hero screen     | Left stick, D-pad |
+| Move         | `←` `→` or `A` `D`             | Left stick, D-pad |
+| Jump         | `Space`, `W` or `↑`            | `A`               |
+| Glide (Bun)  | Hold jump while falling        | Hold `A`          |
+| Run          | `Shift`                        | `X`               |
+| Pause        | `Esc` or `P`                   | `Start`           |
+| Restart      | `R`                            |                   |
+| Sound        | `M`                            |                   |
 
 Hold the jump button to jump higher. Running also makes jumps a little longer.
 
@@ -63,13 +68,14 @@ The game logic and the rendering are kept apart.
 - **`src/game/`** holds the rules in plain TypeScript, with no Three.js and no Vue:
   - `config.ts`: physics and rules
   - `characters.ts`: the three heroes and their movesets
+  - `level.ts` and `levels/`: the map parser, and the level maps in the order they are played
   - `collision.ts`: AABB collision against the tile grid
   - `entities.ts`: entity types and factories
   - `world.ts`: the game loop rules
 
-  The world advances in fixed steps of 1/120 s. Because it is plain code, Vitest tests it directly, and one test plays through the whole level with a small bot.
+  The world advances in fixed steps of 1/120 s. Because it is plain code, Vitest tests it directly, and a small bot plays through every level with every hero.
 - **`src/components/scene/LevelScene.vue`** creates a world for each run and steps it from TresJS's `useLoop().onBeforeRender`. Named priorities in `src/scene/context.ts` set the order inside each frame: the world steps first, the models then copy its state, and the camera and the sky follow last.
-- **The static scenery** (sky, mountains, hills, a forest in the valley, clouds, bushes and flowers) is generated once from a seeded random generator and survives restarts. Only the parts that change during a run are rebuilt.
+- **Each level has a theme** in `src/scene/themes.ts`: the sky, fog, light, tile and plant colors, and which backdrop to build. The static scenery is generated once per level from a seeded random generator and survives restarts. The meadow gets hills and a forest in the valley. The falls get cliffs, a river and waterfalls whose water, mist and foam move every frame (`src/scene/falls.ts`). Only the parts that change during a run are rebuilt.
 - **Draw calls are kept low**:
   - Tiles, coins, clouds, effects and scenery are drawn with `InstancedMesh`.
   - Enemies share their geometries and materials.
@@ -77,9 +83,9 @@ The game logic and the rendering are kept apart.
   - A typical frame needs about 65 draw calls.
 - **Vue reactivity is used only for the HUD and menus.** The 3D models render once and are then moved through template refs every frame.
 
-## Editing the level
+## Editing the levels
 
-The level is an ASCII map in [`src/game/level.ts`](src/game/level.ts). Each character is one tile, and the bottom row is `y = 0`.
+The levels are ASCII maps in [`src/game/levels/`](src/game/levels/), one file per level. Each character is one tile, and the bottom row is `y = 0`.
 
 | Char | Meaning |
 | ---- | ------- |
@@ -99,18 +105,21 @@ The level is an ASCII map in [`src/game/level.ts`](src/game/level.ts). Each char
 | `P`  | Player start |
 | `F`  | Goal flag |
 
-With the default physics, a held jump reaches just over 4 tiles high. A walking jump clears a gap of 5 tiles and a running jump a gap of 8. After you change the map, `npm test` tells you whether the bot can still finish it with every hero.
+With the default physics, a held jump reaches just over 4 tiles high. A walking jump clears a gap of 5 tiles and a running jump a gap of 8. After you change a map, `npm test` tells you whether the bot can still finish every level with every hero.
+
+To add a level, put its map in a new file in `src/game/levels/` and register it in `index.ts` there. Then give it a theme in `src/scene/themes.ts` and a name in `src/app/i18n.ts`. TypeScript reports anything that is still missing.
 
 ## Project structure
 
 ```
 src/
-  game/              rules in plain TypeScript: config, level, entities, collision, world
-  scene/             Three.js builders and shared assets: textures, tiles, scenery, models, flag
+  game/              rules in plain TypeScript: config, map parser, entities, collision, world
+  game/levels/       the ASCII level maps and the order they are played in
+  scene/             Three.js builders and shared assets: textures, themes, tiles, scenery, waterfalls, models, flag
   app/               browser state and services: UI store, i18n, input, audio
   components/scene/  Tres components that draw the world
   components/ui/     Vue HUD and menus
-tests/               Vitest suites for collision, the world rules, the heroes and a full-level bot run for each hero
+tests/               Vitest suites for collision, the world rules, the heroes and a bot run through every level with every hero
 ```
 
 ## Deployment

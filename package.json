@@ -1,8 +1,8 @@
 {
   "name": "sprout-hop",
   "private": true,
-  "version": "0.2.1",
-  "description": "Sprout Hop: a 2.5D platformer level built with Vue 3 and TresJS",
+  "version": "0.3.0",
+  "description": "Sprout Hop: a 2.5D platformer built with Vue 3 and TresJS",
   "license": "MIT",
   "author": "Hayrullah Zafer Yılmaz",
   "homepage": "https://hayrullah-zafer-yilmaz.github.io/sprout-hop/",

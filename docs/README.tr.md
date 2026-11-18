@@ -3,7 +3,7 @@
 [![CI](https://github.com/hayrullah-zafer-yilmaz/sprout-hop/actions/workflows/ci.yml/badge.svg)](https://github.com/hayrullah-zafer-yilmaz/sprout-hop/actions/workflows/ci.yml)
 [![Lisans: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](../LICENSE)
 
-[Vue 3](https://vuejs.org), [TresJS](https://tresjs.org) ve [Three.js](https://threejs.org) ile yapılmış, yandan kaydırmalı bir 2.5D platform oyunu bölümü. Dünya tamamen 3D: derinlik, paralaks ve gerçek gölgeler var. Oynanış ise tek bir 2D düzlemde kalır.
+[Vue 3](https://vuejs.org), [TresJS](https://tresjs.org) ve [Three.js](https://threejs.org) ile yapılmış, yandan kaydırmalı bir 2.5D platform oyunu. Dünya tamamen 3D: derinlik, paralaks ve gerçek gölgeler var. Oynanış ise tek bir 2D düzlemde kalır.
 
 **[Tarayıcıda oynayın](https://hayrullah-zafer-yilmaz.github.io/sprout-hop/)** · [English](../README.md)
 
@@ -12,19 +12,24 @@
 ## Özellikler
 
 - **Seçilebilen üç kahraman**: Sprout dengelidir, Zip en hızlı koşar, Bun en yükseğe zıplar ve zıplama tuşunu basılı tuttuğunuzda süzülür. Seçtiğiniz kahraman canlı bir 3B önizlemeyle gösterilir.
-- **Eksiksiz bir bölüm**: yaklaşık 220 karo genişliğinde. Çukurlar, merdivenler, tek yönlü kalaslar, dikenler, bir kontrol noktası, biri yatay biri dikey iki hareketli platform ve sonunda bir bayrak var.
+- **İki bölüm**: her birinin kendi görünümü ve kendi en iyi puanı var. Bir bölümü bitirdiğinizde bir düğmeyle sıradakine geçebilirsiniz. Kahraman ekranında da istediğiniz bölümü seçebilirsiniz.
+  - **Güneşli Çayır** yaklaşık 220 karo genişliğindedir. Çukurlar, merdivenler, tek yönlü kalaslar, dikenler, bir kontrol noktası, biri yatay biri dikey iki hareketli platform ve sonunda bir bayrak var.
+  - **Sisli Şelale** yaklaşık 200 karo genişliğinde bir nehir kanyonudur. Nehrin üstünde basamak taşları, tahta bir köprü, bir asansör ve hareketli bir platform var. Arka planda üç şelale nehre dökülür; sis yükselir, dipte köpük oluşur ve bir gökkuşağı görünür.
 - **İnce ayarlı platform kontrolleri**: hızlanma ve frenleme, koşma tuşu, basılı tutma süresine göre değişen zıplama yüksekliği, "coyote time" ve zıplama tamponu.
 - **Alttan vurulan bloklar**: altın sandıkları, can sandıkları ve kırılan tuğlalar.
 - **İki düşman türü**: üstüne basılarak yenilen jöleler (art arda basınca puan katlanır) ve üstünden atlanması gereken dikenli toplar.
 - **Hiç asset dosyası yok**: tüm dokular açılışta bir canvas üzerine çizilir, tüm sesler Web Audio API ile sentezlenir. Modeller Three.js temel geometrileriyle kurulur.
-- **Puan, altın, can ve süre**. Kalan süre bonus puana dönüşür, en iyi puan `localStorage` içinde saklanır.
+- **Puan, altın, can ve süre**. Kalan süre bonus puana dönüşür, her bölümün en iyi puanı `localStorage` içinde saklanır.
 - **Klavye ve oyun kumandası** desteği, duraklatma menüsü, İngilizce ve Türkçe arayüz.
+
+![Sisli Şelale: sarı kahraman Zip, bir şelalenin ve soluk bir gökkuşağının önünde iki sandıktan altın çıkarıyor, sonra nehrin üstündeki taş sütunlarda zıplayarak ilerliyor](assets/misty-falls.gif)
 
 ## Kontroller
 
 | Eylem             | Klavye                                | Oyun kumandası          |
 | ----------------- | ------------------------------------- | ----------------------- |
 | Kahraman seçme    | Kahraman ekranında `←` `→`            | Sol analog, yön tuşları |
+| Bölüm seçme       | Kahraman ekranında `↑` `↓`            | Sol analog, yön tuşları |
 | Hareket           | `←` `→` veya `A` `D`                  | Sol analog, yön tuşları |
 | Zıplama           | `Space`, `W` veya `↑`                 | `A`                     |
 | Süzülme (Bun)     | Düşerken zıplama tuşunu basılı tutun  | `A` basılı              |
@@ -63,13 +68,14 @@ Oyun mantığı ile çizim birbirinden ayrıdır.
 - **`src/game/`** kuralları Three.js ve Vue içermeyen düz TypeScript ile tutar:
   - `config.ts`: fizik ve kurallar
   - `characters.ts`: üç kahraman ve hareket özellikleri
+  - `level.ts` ve `levels/`: harita okuyucu ve oynanma sırasına göre bölüm haritaları
   - `collision.ts`: karo ızgarasına karşı AABB çarpışması
   - `entities.ts`: varlık tipleri ve oluşturucuları
   - `world.ts`: oyun kuralları
 
-  Dünya 1/120 saniyelik sabit adımlarla ilerler. Düz kod olduğu için Vitest onu doğrudan test eder; testlerden biri küçük bir botla bölümün tamamını oynar.
+  Dünya 1/120 saniyelik sabit adımlarla ilerler. Düz kod olduğu için Vitest onu doğrudan test eder; küçük bir bot her bölümü her kahramanla baştan sona oynar.
 - **`src/components/scene/LevelScene.vue`** her oyun için bir dünya oluşturur ve onu TresJS `useLoop().onBeforeRender` döngüsü içinde ilerletir. Karedeki sırayı `src/scene/context.ts` içindeki adlandırılmış öncelikler belirler: önce dünya ilerler, sonra modeller onun durumunu kopyalar, en son kamera ve gökyüzü takip eder.
-- **Statik manzara** (gökyüzü, dağlar, tepeler, vadideki orman, bulutlar, çalılar ve çiçekler) tohumlu bir rastgele sayı üreteciyle bir kez oluşturulur ve yeniden başlatmalarda korunur. Yalnızca oyun sırasında değişen parçalar yeniden kurulur.
+- **Her bölümün bir teması var** (`src/scene/themes.ts`): gökyüzü, sis, ışık, karo ve bitki renkleri ile hangi arka planın kurulacağı. Statik manzara her bölüm için tohumlu bir rastgele sayı üreteciyle bir kez oluşturulur ve yeniden başlatmalarda korunur. Çayırda tepeler ve vadide bir orman var. Şelalede ise kayalıklar, bir nehir ve suyu, sisi ve köpüğü her karede hareket eden şelaleler var (`src/scene/falls.ts`). Yalnızca oyun sırasında değişen parçalar yeniden kurulur.
 - **Çizim çağrısı sayısı düşük tutulur**:
   - Karolar, altınlar, bulutlar, efektler ve manzara `InstancedMesh` ile çizilir.
   - Düşmanlar geometri ve materyallerini paylaşır.
@@ -77,9 +83,9 @@ Oyun mantığı ile çizim birbirinden ayrıdır.
   - Tipik bir kare yaklaşık 65 çizim çağrısıyla çizilir.
 - **Vue reaktivitesi yalnızca HUD ve menüler için kullanılır.** 3B modeller bir kez çizilir, sonra her karede template ref üzerinden hareket ettirilir.
 
-## Bölümü düzenlemek
+## Bölümleri düzenlemek
 
-Bölüm, [`src/game/level.ts`](../src/game/level.ts) içindeki bir ASCII haritadır. Her karakter bir karodur, en alt satır `y = 0` konumudur.
+Bölümler, [`src/game/levels/`](../src/game/levels/) klasöründeki ASCII haritalardır ve her bölüm ayrı bir dosyadadır. Her karakter bir karodur, en alt satır `y = 0` konumudur.
 
 | Karakter | Anlamı |
 | -------- | ------ |
@@ -99,18 +105,21 @@ Bölüm, [`src/game/level.ts`](../src/game/level.ts) içindeki bir ASCII haritad
 | `P`  | Oyuncunun başlangıç yeri |
 | `F`  | Bitiş bayrağı |
 
-Varsayılan fizikle, basılı tutulan bir zıplama 4 karodan biraz daha yükseğe çıkar. Yürürken yapılan zıplama 5 karoluk, koşarken yapılan zıplama 8 karoluk bir boşluğu geçer. Haritayı değiştirdikten sonra `npm test`, botun bölümü her kahramanla hala bitirip bitiremediğini söyler.
+Varsayılan fizikle, basılı tutulan bir zıplama 4 karodan biraz daha yükseğe çıkar. Yürürken yapılan zıplama 5 karoluk, koşarken yapılan zıplama 8 karoluk bir boşluğu geçer. Bir haritayı değiştirdikten sonra `npm test`, botun her bölümü her kahramanla hala bitirip bitiremediğini söyler.
+
+Yeni bir bölüm eklemek için haritasını `src/game/levels/` içinde yeni bir dosyaya koyun ve oradaki `index.ts` dosyasında listeye ekleyin. Ardından `src/scene/themes.ts` içinde ona bir tema, `src/app/i18n.ts` içinde bir ad verin. Eksik kalan bir yer varsa TypeScript bunu bildirir.
 
 ## Proje yapısı
 
 ```
 src/
-  game/              düz TypeScript ile kurallar: ayarlar, bölüm, varlıklar, çarpışma, dünya
-  scene/             Three.js kurucuları ve paylaşılan parçalar: dokular, karolar, manzara, modeller, bayrak
+  game/              düz TypeScript ile kurallar: ayarlar, harita okuyucu, varlıklar, çarpışma, dünya
+  game/levels/       ASCII bölüm haritaları ve oynanma sırası
+  scene/             Three.js kurucuları ve paylaşılan parçalar: dokular, temalar, karolar, manzara, şelaleler, modeller, bayrak
   app/               tarayıcı durumu ve servisler: arayüz durumu, i18n, giriş, ses
   components/scene/  dünyayı çizen Tres bileşenleri
   components/ui/     Vue HUD ve menüler
-tests/               çarpışma, dünya kuralları, kahramanlar ve her kahramanla tüm bölümü oynayan bot için Vitest testleri
+tests/               çarpışma, dünya kuralları, kahramanlar ve her bölümü her kahramanla oynayan bot için Vitest testleri
 ```
 
 ## Yayınlama

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { formatScore } from '../../app/format'
-import { t, togglePause, toggleMute, ui } from '../../app/store'
+import { levelTitle, t, togglePause, toggleMute, ui } from '../../app/store'
 import CharacterPortrait from './CharacterPortrait.vue'
 
 const score = computed(() => formatScore(ui.score))
@@ -35,7 +35,7 @@ const lowTime = computed(() => ui.time <= 60 && ui.screen === 'playing')
       </div>
     </div>
     <div class="hud-group">
-      <span class="level">{{ t.level }}</span>
+      <span class="level">{{ levelTitle }}</span>
       <button class="icon-button" type="button" :aria-label="ui.muted ? t.soundOff : t.soundOn" :title="`${t.sound} (M)`" @click="toggleMute">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M4 9h4l5-4v14l-5-4H4Z" fill="currentColor" />

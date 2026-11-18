@@ -1,18 +1,20 @@
 <script setup lang="ts">
-import { markRaw } from 'vue'
+import { computed, markRaw } from 'vue'
 import { TresCanvas } from '@tresjs/core'
 import { ACESFilmicToneMapping, PCFShadowMap } from 'three'
-import { LEVEL_ONE, parseLevel } from '../../game/level'
+import { loadLevel } from '../../game/levels'
 import { ui } from '../../app/store'
+import { THEMES } from '../../scene/themes'
 import SceneryLayer from './SceneryLayer.vue'
 import LevelScene from './LevelScene.vue'
 
-const level = markRaw(parseLevel(LEVEL_ONE))
+const level = computed(() => markRaw(loadLevel(ui.level)))
+const theme = computed(() => THEMES[ui.level])
 </script>
 
 <template>
   <TresCanvas
-    clear-color="#8cc8ff"
+    :clear-color="theme.sky[1]"
     shadows
     antialias
     power-preference="high-performance"
@@ -21,7 +23,7 @@ const level = markRaw(parseLevel(LEVEL_ONE))
     :tone-mapping-exposure="1.05"
     :dpr="[1, 2]"
   >
-    <SceneryLayer :level="level" />
-    <LevelScene :key="ui.run" :level="level" />
+    <SceneryLayer :key="ui.level" :level="level" :theme="theme" />
+    <LevelScene :key="ui.run" :level="level" :theme="theme" />
   </TresCanvas>
 </template>

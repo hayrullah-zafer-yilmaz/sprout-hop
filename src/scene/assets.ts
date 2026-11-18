@@ -15,7 +15,7 @@ import {
   type BufferGeometry,
 } from 'three'
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js'
-import { getTileTextures } from './textures'
+import { getBrickTexture } from './textures'
 
 type Vec3 = [number, number, number]
 
@@ -97,7 +97,7 @@ export const heartParts = {
 
 export const debrisParts = {
   geometry: new BoxGeometry(0.42, 0.42, 0.42),
-  material: new MeshStandardMaterial({ map: getTileTextures().brick, roughness: 0.9 }),
+  material: new MeshStandardMaterial({ map: getBrickTexture(), roughness: 0.9 }),
 }
 
 export const spikeParts = {

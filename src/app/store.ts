@@ -1,6 +1,7 @@
 import { computed, reactive } from 'vue'
 import { CHARACTER_IDS, isCharacterId, type CharacterId } from '../game/characters'
 import { RULES } from '../game/config'
+import { LEVEL_IDS, isLevelId, levelNumber, nextLevel, type LevelId } from '../game/levels'
 import type { World } from '../game/world'
 import { sounds } from './audio'
 import { detectLocale, messages, saveLocale, type Locale } from './i18n'
@@ -8,9 +9,14 @@ import { input } from './input'
 
 export type Screen = 'title' | 'select' | 'playing' | 'paused' | 'gameover' | 'complete'
 
-const BEST_KEY = 'sprout-hop.best'
+const LEGACY_BEST_KEY = 'sprout-hop.best'
 const MUTE_KEY = 'sprout-hop.muted'
 const CHARACTER_KEY = 'sprout-hop.character'
+const LEVEL_KEY = 'sprout-hop.level'
+
+function bestKey(level: LevelId): string {
+  return `sprout-hop.best.${level}`
+}
 
 function readCharacter(): CharacterId {
   if (typeof window === 'undefined') return 'sprout'
@@ -24,6 +30,21 @@ function readNumber(key: string): number {
   return Number.isFinite(value) ? value : 0
 }
 
+function readLevel(): LevelId {
+  if (typeof window === 'undefined') return 'meadow'
+  const stored = window.localStorage.getItem(LEVEL_KEY)
+  return isLevelId(stored) ? stored : 'meadow'
+}
+
+function readBests(): Record<LevelId, number> {
+  const bests = {} as Record<LevelId, number>
+  for (const level of LEVEL_IDS) {
+    const legacy = level === 'meadow' ? readNumber(LEGACY_BEST_KEY) : 0
+    bests[level] = readNumber(bestKey(level)) || legacy
+  }
+  return bests
+}
+
 export const ui = reactive({
   screen: 'title' as Screen,
   run: 0,
@@ -32,16 +53,23 @@ export const ui = reactive({
   totalCoins: 0,
   lives: RULES.startLives,
   time: RULES.levelTime,
-  best: readNumber(BEST_KEY),
+  bests: readBests(),
   newBest: false,
   muted: typeof window !== 'undefined' && window.localStorage.getItem(MUTE_KEY) === '1',
   locale: detectLocale() as Locale,
   character: readCharacter(),
+  level: readLevel(),
 })
 
 sounds.setMuted(ui.muted)
 
 export const t = computed(() => messages[ui.locale])
+
+export const best = computed(() => ui.bests[ui.level])
+
+export const levelTitle = computed(() => `${t.value.levelWord} ${levelNumber(ui.level)} · ${t.value.levelNames[ui.level]}`)
+
+export const upcomingLevel = computed(() => nextLevel(ui.level))
 
 export function setLocale(locale: Locale): void {
   ui.locale = locale
@@ -76,6 +104,31 @@ export function chooseHero(character: CharacterId): void {
 export function cycleHero(step: 1 | -1): void {
   const index = CHARACTER_IDS.indexOf(ui.character)
   chooseHero(CHARACTER_IDS[(index + step + CHARACTER_IDS.length) % CHARACTER_IDS.length])
+}
+
+function setLevel(level: LevelId): void {
+  ui.level = level
+  window.localStorage.setItem(LEVEL_KEY, level)
+}
+
+export function chooseLevel(level: LevelId): void {
+  if (ui.level === level) return
+  setLevel(level)
+  ui.run++
+  resetHud()
+  sounds.play('select')
+}
+
+export function cycleLevel(step: 1 | -1): void {
+  const index = LEVEL_IDS.indexOf(ui.level)
+  chooseLevel(LEVEL_IDS[(index + step + LEVEL_IDS.length) % LEVEL_IDS.length])
+}
+
+export function playNextLevel(): void {
+  const next = nextLevel(ui.level)
+  if (!next) return
+  setLevel(next)
+  restart()
 }
 
 export function changeHero(): void {
@@ -119,10 +172,10 @@ export function toggleMute(): void {
 }
 
 export function finishLevel(score: number): void {
-  if (score > ui.best) {
-    ui.best = score
+  if (score > ui.bests[ui.level]) {
+    ui.bests[ui.level] = score
     ui.newBest = true
-    window.localStorage.setItem(BEST_KEY, String(score))
+    window.localStorage.setItem(bestKey(ui.level), String(score))
   }
   ui.screen = 'complete'
 }
