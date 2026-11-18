@@ -1,14 +1,16 @@
 import { parseLevel, type LevelData } from '../level'
 import { FALLS } from './falls'
+import { MAGMA } from './magma'
 import { MEADOW } from './meadow'
 
-export type LevelId = 'meadow' | 'falls'
+export type LevelId = 'meadow' | 'falls' | 'magma'
 
-export const LEVEL_IDS: LevelId[] = ['meadow', 'falls']
+export const LEVEL_IDS: LevelId[] = ['meadow', 'falls', 'magma']
 
 const ROWS: Record<LevelId, string[]> = {
   meadow: MEADOW,
   falls: FALLS,
+  magma: MAGMA,
 }
 
 const parsed = new Map<LevelId, LevelData>()

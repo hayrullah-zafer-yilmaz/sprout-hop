@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { CHARACTERS, type CharacterId } from '../src/game/characters'
-import { RULES } from '../src/game/config'
+import { ROCKS, RULES } from '../src/game/config'
 import { NO_INPUT, type GameEvent, type InputState } from '../src/game/entities'
 import { Tile, parseLevel } from '../src/game/level'
 import { LEVEL_IDS, levelNumber, loadLevel, nextLevel } from '../src/game/levels'
@@ -65,6 +65,16 @@ describe('parseLevel', () => {
     expect(data.spikes.length).toBeGreaterThan(0)
   })
 
+  it('reads the magma level with its falling rocks', () => {
+    const data = loadLevel('magma')
+    expect(data.width).toBe(210)
+    expect(data.start).toEqual({ x: 3, y: 2 })
+    expect(data.goal).toEqual({ x: 203, y: 2 })
+    expect(data.rocks).toHaveLength(11)
+    expect(data.rocks.map((rock) => rock.x)).toEqual([...data.rocks.map((rock) => rock.x)].sort((a, b) => a - b))
+    expect(data.checkpoints).toHaveLength(1)
+  })
+
   it.each(LEVEL_IDS)('keeps every gap in %s at most twelve tiles wide', (id) => {
     const data = loadLevel(id)
     let gap = 0
@@ -79,10 +89,11 @@ describe('parseLevel', () => {
   })
 
   it('orders the levels and knows which one comes next', () => {
-    expect(LEVEL_IDS).toEqual(['meadow', 'falls'])
-    expect(levelNumber('falls')).toBe(2)
+    expect(LEVEL_IDS).toEqual(['meadow', 'falls', 'magma'])
+    expect(levelNumber('magma')).toBe(3)
     expect(nextLevel('meadow')).toBe('falls')
-    expect(nextLevel('falls')).toBeNull()
+    expect(nextLevel('falls')).toBe('magma')
+    expect(nextLevel('magma')).toBeNull()
   })
 
   it('rejects unknown characters and missing markers', () => {
@@ -283,6 +294,73 @@ describe('enemies and hazards', () => {
     const world = level(['', '', '', '', '', 'P  ^^     F', '###########', '###########'])
     run(world, 1.5, input({ axis: 1 }))
     expect(world.phase).toBe('dying')
+  })
+})
+
+describe('falling rocks', () => {
+  const ROWS = ['      r', '', '', '', '', 'P         F', '###########', '###########']
+
+  it('warns first, then drops, shatters on the ground and waits for the next drop', () => {
+    const world = level(ROWS)
+    const log = events(world)
+    const rock = world.rocks[0]
+    run(world, 0.1)
+    expect(rock.state).toBe('warning')
+    expect(rock.floor).toBe(2)
+    run(world, ROCKS.delay)
+    expect(rock.state).toBe('falling')
+    let crashedAfter = 0
+    while (!log.includes('crash') && crashedAfter < 3) {
+      world.step(STEP, NO_INPUT)
+      crashedAfter += STEP
+    }
+    expect(log).toContain('crash')
+    expect(rock.state).toBe('resting')
+    expect(rock.timer).toBeCloseTo(ROCKS.period, 1)
+    expect(world.quake).toBeGreaterThan(0)
+    expect(world.debris.filter((piece) => piece.active && piece.kind === 'rock').length).toBeGreaterThan(0)
+    expect(world.phase).toBe('playing')
+  })
+
+  it('costs a life when a rock lands on the player', () => {
+    const world = level(ROWS)
+    world.player.x = world.rocks[0].x
+    run(world, 2)
+    expect(world.phase).toBe('dying')
+    expect(world.lives).toBe(RULES.startLives - 1)
+  })
+
+  it('cannot hurt the player right after a respawn', () => {
+    const world = level(ROWS)
+    world.player.x = world.rocks[0].x
+    world.player.invulnerable = RULES.invulnerableTime
+    run(world, 1.5)
+    expect(world.phase).toBe('playing')
+  })
+
+  it('crushes an enemy standing under it', () => {
+    const world = level(['      r', '', '', '', '', 'P    XsX  F', '###########', '###########'])
+    const slime = world.enemies[0]
+    run(world, 1.6)
+    expect(slime.alive).toBe(false)
+    expect(slime.flipped).toBe(true)
+  })
+
+  it('drops nearby rocks one after another', () => {
+    const world = level(['  r   r', '', '', '', '', 'P         F', '###########', '###########'])
+    const [first, second] = world.rocks
+    expect(second.timer - first.timer).toBeCloseTo(ROCKS.stagger)
+  })
+
+  it('falls into a pit without shattering', () => {
+    const world = level(['      r', '', '', '', '', 'P         F', '######  ###', '######  ###'])
+    const log = events(world)
+    const rock = world.rocks[0]
+    run(world, 0.1)
+    expect(rock.floor).toBeNull()
+    run(world, 2)
+    expect(log).not.toContain('crash')
+    expect(rock.state).not.toBe('falling')
   })
 })
 

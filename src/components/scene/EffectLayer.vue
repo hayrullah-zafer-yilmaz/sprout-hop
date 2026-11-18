@@ -3,7 +3,7 @@ import { InstancedMesh, Matrix4, Object3D, type BufferGeometry, type Material } 
 import { markRaw, onBeforeUnmount } from 'vue'
 import { useLoop } from '@tresjs/core'
 import type { Debris, Pop } from '../../game/entities'
-import { coinParts, debrisParts, heartParts } from '../../scene/assets'
+import { coinParts, debrisParts, heartParts, rockParts } from '../../scene/assets'
 import { PRIORITY, useWorld } from '../../scene/context'
 
 const HIDDEN = new Matrix4().makeScale(0, 0, 0)
@@ -23,7 +23,9 @@ function instanced(geometry: BufferGeometry, material: Material, count: number):
 const coinPops = instanced(coinParts.rim, coinParts.gold, world.pops.length)
 const lifePops = instanced(heartParts.geometry, heartParts.material, world.pops.length)
 const debris = instanced(debrisParts.geometry, debrisParts.material, world.debris.length)
+const rubble = instanced(rockParts.rubble, rockParts.basalt, world.debris.length)
 debris.castShadow = true
+rubble.castShadow = true
 
 function show<T>(mesh: InstancedMesh, items: T[], pose: (item: T, target: Object3D) => boolean): void {
   let anyShown = false
@@ -68,11 +70,12 @@ const { onBeforeRender } = useLoop()
 onBeforeRender(() => {
   show(coinPops, world.pops, poseCoinPop)
   show(lifePops, world.pops, poseLifePop)
-  show(debris, world.debris, poseDebris)
+  show(debris, world.debris, (piece, target) => piece.kind === 'brick' && poseDebris(piece, target))
+  show(rubble, world.debris, (piece, target) => piece.kind === 'rock' && poseDebris(piece, target))
 }, PRIORITY.models)
 
 onBeforeUnmount(() => {
-  for (const mesh of [coinPops, lifePops, debris]) mesh.dispose()
+  for (const mesh of [coinPops, lifePops, debris, rubble]) mesh.dispose()
 })
 </script>
 
@@ -80,4 +83,5 @@ onBeforeUnmount(() => {
   <primitive :object="coinPops" />
   <primitive :object="lifePops" />
   <primitive :object="debris" />
+  <primitive :object="rubble" />
 </template>

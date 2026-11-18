@@ -18,6 +18,8 @@ import EnemyLayer from './EnemyLayer.vue'
 import CheckpointLayer from './CheckpointLayer.vue'
 import GoalFlag from './GoalFlag.vue'
 import EffectLayer from './EffectLayer.vue'
+import RockLayer from './RockLayer.vue'
+import LavaLayer from './LavaLayer.vue'
 import PlayerModel from './PlayerModel.vue'
 
 const MAX_FRAME_TIME = 1 / 20
@@ -36,7 +38,7 @@ ui.totalCoins = world.totalCoins
 if (import.meta.env.DEV) Object.assign(window, { sproutHop: world })
 
 function onGameEvent(event: GameEvent): void {
-  sounds.play(event)
+  sounds.play(event, event === 'crash' ? 0.35 + world.quake * 0.65 : 1)
   if (event === 'complete') finishLevel(world.score)
   if (event === 'gameover') endGame()
 }
@@ -71,5 +73,7 @@ onBeforeRender(({ delta }) => {
   <CheckpointLayer />
   <GoalFlag />
   <EffectLayer />
+  <RockLayer v-if="world.rocks.length > 0" />
+  <LavaLayer v-if="theme.lava !== null" :surface="theme.lava" />
   <PlayerModel />
 </template>

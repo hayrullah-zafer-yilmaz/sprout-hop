@@ -1,5 +1,6 @@
 import type { LevelId } from '../game/levels'
 import type { TilePalette } from './textures'
+import { LAVA_LEVEL } from './volcano'
 
 export interface DecorPalette {
   bush: string
@@ -7,17 +8,27 @@ export interface DecorPalette {
   tuft: string
   rock: string
   petals: string[]
+  glow?: string
 }
 
 export interface Theme {
-  backdrop: 'meadow' | 'falls'
+  backdrop: 'meadow' | 'falls' | 'volcano'
   seeds: { decor: number; backdrop: number }
   sky: [string, string, string]
   fog: { color: string; near: number; far: number }
   hemisphere: { sky: string; ground: string; intensity: number }
   sun: { color: string; intensity: number }
+  sunDisc: [string, string] | null
+  clouds: { color: string; glow: string; intensity: number } | null
+  lava: number | null
   tiles: TilePalette
   decor: DecorPalette
+}
+
+const DAYLIGHT = {
+  sunDisc: ['#fff6cf', '#fff3c4'] as [string, string],
+  clouds: { color: '#ffffff', glow: '#dfefff', intensity: 0.35 },
+  lava: null,
 }
 
 export const THEMES: Record<LevelId, Theme> = {
@@ -28,6 +39,7 @@ export const THEMES: Record<LevelId, Theme> = {
     fog: { color: '#d6ecff', near: 45, far: 210 },
     hemisphere: { sky: '#e3f2ff', ground: '#5b7a3c', intensity: 1.5 },
     sun: { color: '#fff0d4', intensity: 2.4 },
+    ...DAYLIGHT,
     tiles: {
       grass: '#5bbf4f',
       grassSpeckles: ['#4caa42', '#74d265', '#66c95a', '#8ee07f'],
@@ -59,6 +71,7 @@ export const THEMES: Record<LevelId, Theme> = {
     fog: { color: '#d3e7ec', near: 32, far: 175 },
     hemisphere: { sky: '#e2f3f7', ground: '#3e6b56', intensity: 1.45 },
     sun: { color: '#fff4e2', intensity: 2.2 },
+    ...DAYLIGHT,
     tiles: {
       grass: '#4e9f5e',
       grassSpeckles: ['#3f8c51', '#5fb36d', '#6fc27a', '#8dd394'],
@@ -81,6 +94,41 @@ export const THEMES: Record<LevelId, Theme> = {
       tuft: '#3a9d5d',
       rock: '#7d8f8a',
       petals: ['#a5d8ff', '#ffffff', '#b197fc', '#ffe066', '#74c0fc'],
+    },
+  },
+  magma: {
+    backdrop: 'volcano',
+    seeds: { decor: 5150, backdrop: 6060 },
+    sky: ['#1c0707', '#5c170c', '#d9581e'],
+    fog: { color: '#3a120a', near: 16, far: 150 },
+    hemisphere: { sky: '#ffb48a', ground: '#ff4a12', intensity: 1.15 },
+    sun: { color: '#ffb27a', intensity: 1.9 },
+    sunDisc: null,
+    clouds: null,
+    lava: LAVA_LEVEL,
+    tiles: {
+      grass: '#7a7375',
+      grassSpeckles: ['#6a6365', '#888183', '#726b6d', '#958e90'],
+      grassEdge: '#4d4749',
+      grassHighlight: '#c4bcbe',
+      dirt: '#3e3739',
+      dirtSpeckles: ['#332d2f', '#4a4245', '#4a2a20'],
+      pebble: '#5e5658',
+      pebbleShade: '#211c1d',
+      stone: '#857e80',
+      stoneSpeckles: ['#787173', '#918a8c', '#6c6567'],
+      stoneLight: '#b3abad',
+      stoneDark: '#4d4749',
+      stoneSeam: '#655e60',
+      stoneSeamLight: '#a09899',
+    },
+    decor: {
+      bush: '#5a5355',
+      stem: '#2e2729',
+      tuft: '#6b5f5a',
+      rock: '#4d4648',
+      petals: ['#ff7a1a', '#ffb02e', '#ff4d1a'],
+      glow: '#ff5a0a',
     },
   },
 }

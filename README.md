@@ -12,9 +12,10 @@ A 2.5D side-scrolling platformer built with [Vue 3](https://vuejs.org), [TresJS]
 ## Features
 
 - **Three heroes to choose from**: Sprout is balanced, Zip runs the fastest, and Bun jumps the highest and glides while you hold jump. A live 3D preview shows the hero you pick. Each hero has its own outfit and a face that follows the action: they blink, squint while running, gasp in the air and cheer at the flag.
-- **Two levels**, each with its own look and its own best score. When you finish a level, the next one starts after a five-second countdown, and the hero screen lets you pick either level.
+- **Three levels**, each with its own look and its own best score. When you finish a level, the next one starts after a five-second countdown, and the hero screen lets you pick any level.
   - **Sunny Meadow** is about 220 tiles wide, with pits, stairs, one-way planks, spikes, a checkpoint, a horizontal and a vertical moving platform, and a flag at the end.
   - **Misty Falls** is a river canyon about 200 tiles wide, with stepping stones, a wooden bridge, a lift and a moving platform over the river. In the background, three waterfalls pour into the river, with rising mist, foam and a rainbow.
+  - **Magma Mountain** is a path over a lava lake, about 210 tiles wide, with basalt columns, a plank bridge, a lift and a moving platform. Rocks fall from the sky: a growing shadow and crumbling pebbles mark where each one will land, and a rock that hits the hero costs a life. Behind it, a smoking volcano, drifting smoke, lava falls that pour out of the cliffs, and rising embers.
 - **Tuned platformer controls**: acceleration and braking, a run button, variable jump height, coyote time and jump buffering.
 - **Blocks you hit from below**: coin crates, life crates and breakable bricks.
 - **Two enemy types**: slimes you can stomp, with stomp combos, and spiky rollers you have to jump over.
@@ -23,6 +24,8 @@ A 2.5D side-scrolling platformer built with [Vue 3](https://vuejs.org), [TresJS]
 - **Keyboard and gamepad** input, a pause menu, and English and Turkish UI.
 
 ![Misty Falls: Zip, the yellow hero, pops coins out of two crates in front of a waterfall and a faint rainbow, then hops across stone columns over the river](docs/assets/misty-falls.gif)
+
+![Magma Mountain: Bun, the bunny, pops a coin out of a crate, a shadow on the ground warns of a falling rock that shatters in a cloud of dust right next to Bun, and the path continues over a lava lake, past a lava fall pouring out of the cliffs, under a smoking volcano](docs/assets/magma-mountain.gif)
 
 ## Controls
 
@@ -75,13 +78,13 @@ The game logic and the rendering are kept apart.
 
   The world advances in fixed steps of 1/120 s. Because it is plain code, Vitest tests it directly, and a small bot plays through every level with every hero.
 - **`src/components/scene/LevelScene.vue`** creates a world for each run and steps it from TresJS's `useLoop().onBeforeRender`. Named priorities in `src/scene/context.ts` set the order inside each frame: the world steps first, the models then copy its state, and the camera and the sky follow last.
-- **Each level has a theme** in `src/scene/themes.ts`: the sky, fog, light, tile and plant colors, and which backdrop to build. The static scenery is generated once per level from a seeded random generator and survives restarts. The meadow gets hills and a forest in the valley. The falls get cliffs, a river and waterfalls whose water, mist and foam move every frame (`src/scene/falls.ts`). Only the parts that change during a run are rebuilt.
+- **Each level has a theme** in `src/scene/themes.ts`: the sky, fog, light, tile and plant colors, and which backdrop to build. The static scenery is generated once per level from a seeded random generator and survives restarts. The meadow gets hills and a forest in the valley. The falls and Magma Mountain share a canyon builder (`src/scene/canyon.ts`) for cliffs, falls of water or lava, foam and the sea below, all moving every frame. Magma Mountain swaps the clouds and the sun for drifting smoke, and adds a smoking volcano and rising embers (`src/scene/volcano.ts`), with light basalt platforms that stand out against the lava. Only the parts that change during a run are rebuilt.
 - **The heroes** share one body shape and differ in color, outfit and face (`src/scene/hero.ts`, `heroKit.ts`, `heroGear.ts`). Each face is a canvas atlas of eight expressions projected onto the body, and the model picks one from the game state every frame (`heroFace.ts`). A thin outline and a soft rim light keep the heroes readable against busy backgrounds.
 - **Draw calls are kept low**:
   - Tiles, coins, clouds, effects and scenery are drawn with `InstancedMesh`.
   - Enemies share their geometries and materials.
   - Paired parts such as eyes are merged into one geometry.
-  - A typical frame needs about 75 draw calls in the meadow and 85 at the falls.
+  - A typical frame needs about 75 draw calls in the meadow, 85 at the falls and 100 on Magma Mountain.
 - **Vue reactivity is used only for the HUD and menus.** The 3D models render once and are then moved through template refs every frame.
 
 ## Editing the levels
@@ -100,6 +103,7 @@ The levels are ASCII maps in [`src/game/levels/`](src/game/levels/), one file pe
 | `s`  | Slime |
 | `k`  | Spiky roller |
 | `^`  | Spikes |
+| `r`  | Falling rock: drops into this column again and again, after a warning |
 | `m` … `M` | Horizontal moving platform: start and end on the same row |
 | `v` … `V` | Vertical moving platform: start and end in the same column |
 | `K`  | Checkpoint |
@@ -116,7 +120,7 @@ To add a level, put its map in a new file in `src/game/levels/` and register it 
 src/
   game/              rules in plain TypeScript: config, map parser, entities, collision, world
   game/levels/       the ASCII level maps and the order they are played in
-  scene/             Three.js builders and shared assets: textures, themes, tiles, scenery, waterfalls, heroes, models, flag
+  scene/             Three.js builders and shared assets: textures, themes, tiles, scenery, canyons, volcano, heroes, models, flag
   app/               browser state and services: UI store, i18n, input, audio
   components/scene/  Tres components that draw the world
   components/ui/     Vue HUD and menus

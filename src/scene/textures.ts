@@ -382,3 +382,109 @@ export function createSoftDotTexture(): CanvasTexture {
     ctx.fillRect(0, 0, size, size)
   })
 }
+
+const LAVA = {
+  crust: [30, 7, 4],
+  molten: [150, 38, 9],
+  hot: [236, 118, 32],
+}
+
+function blend(a: number[], b: number[], t: number): number[] {
+  return a.map((value, i) => Math.round(value + (b[i] - value) * t))
+}
+
+function smooth(t: number): number {
+  return t * t * (3 - 2 * t)
+}
+
+function noiseLayer(width: number, height: number, cellsX: number, cellsY: number, random: () => number): Float32Array {
+  const grid = Array.from({ length: cellsX * cellsY }, () => random())
+  const layer = new Float32Array(width * height)
+  const at = (x: number, y: number) => grid[(((y % cellsY) + cellsY) % cellsY) * cellsX + (((x % cellsX) + cellsX) % cellsX)]
+  for (let y = 0; y < height; y++) {
+    const fy = (y / height) * cellsY
+    const y0 = Math.floor(fy)
+    const ty = smooth(fy - y0)
+    for (let x = 0; x < width; x++) {
+      const fx = (x / width) * cellsX
+      const x0 = Math.floor(fx)
+      const tx = smooth(fx - x0)
+      const top = at(x0, y0) + (at(x0 + 1, y0) - at(x0, y0)) * tx
+      const bottom = at(x0, y0 + 1) + (at(x0 + 1, y0 + 1) - at(x0, y0 + 1)) * tx
+      layer[y * width + x] = top + (bottom - top) * ty
+    }
+  }
+  return layer
+}
+
+function fractal(width: number, height: number, cells: [number, number][], random: () => number): Float32Array {
+  const octaves = cells.map(([x, y], i) => ({ layer: noiseLayer(width, height, x, y, random), weight: 0.5 ** i }))
+  const total = octaves.reduce((sum, octave) => sum + octave.weight, 0)
+  const result = new Float32Array(width * height)
+  for (let i = 0; i < result.length; i++) result[i] = octaves.reduce((sum, octave) => sum + octave.layer[i] * octave.weight, 0) / total
+  return result
+}
+
+export function createLavaTexture(): CanvasTexture {
+  const size = 256
+  const random = createRandom(77)
+  const noise = fractal(size, size, [[4, 4], [8, 8], [16, 16], [32, 32]], random)
+  return canvasTexture(size, size, (ctx) => {
+    const image = ctx.createImageData(size, size)
+    for (let i = 0; i < size * size; i++) {
+      const value = noise[i]
+      const heat = Math.min(1, Math.max(0, (value - 0.38) / 0.45))
+      const color = heat < 0.7 ? blend(LAVA.crust, LAVA.molten, smooth(heat / 0.7)) : blend(LAVA.molten, LAVA.hot, smooth((heat - 0.7) / 0.3))
+      image.data.set([color[0], color[1], color[2], 255], i * 4)
+    }
+    ctx.putImageData(image, 0, 0)
+  })
+}
+
+const LAVAFALL = {
+  crust: [120, 24, 8],
+  molten: [236, 84, 12],
+  hot: [255, 176, 48],
+}
+
+export function createLavafallTexture(seed: number): CanvasTexture {
+  const width = 128
+  const height = 512
+  const noise = fractal(width, height, [[4, 3], [8, 6], [16, 12], [32, 6]], createRandom(seed))
+  return canvasTexture(width, height, (ctx) => {
+    const image = ctx.createImageData(width, height)
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const i = y * width + x
+        const across = Math.abs(x / (width - 1) - 0.5) * 2
+        const edge = Math.min(1, (1 - across) / 0.14)
+        const heat = Math.min(1, Math.max(0, 0.28 + (1 - across * across) * 0.46 + (noise[i] - 0.5) * 1.2))
+        const color =
+          heat < 0.42
+            ? blend(LAVAFALL.crust, LAVAFALL.molten, smooth(Math.max(0, heat - 0.28) / 0.14))
+            : blend(LAVAFALL.molten, LAVAFALL.hot, smooth((heat - 0.42) / 0.58))
+        image.data.set([color[0], color[1], color[2], Math.round(255 * edge)], i * 4)
+      }
+    }
+    ctx.putImageData(image, 0, 0)
+  })
+}
+
+export function createSmokeTexture(): CanvasTexture {
+  const size = 128
+  const random = createRandom(53)
+  return canvasTexture(size, size, (ctx) => {
+    for (let i = 0; i < 9; i++) {
+      const angle = random() * Math.PI * 2
+      const distance = random() * size * 0.18
+      const x = size / 2 + Math.cos(angle) * distance
+      const y = size / 2 + Math.sin(angle) * distance * 0.7
+      const radius = size * (0.18 + random() * 0.14)
+      const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius)
+      gradient.addColorStop(0, 'rgba(255, 255, 255, 0.5)')
+      gradient.addColorStop(1, 'rgba(255, 255, 255, 0)')
+      ctx.fillStyle = gradient
+      ctx.fillRect(0, 0, size, size)
+    }
+  })
+}

@@ -68,6 +68,18 @@ const SOUNDS: Partial<Record<SoundName, Note[]>> = {
     { wave: 'triangle', from: NOTE(12), start: 0, duration: 0.08, volume: 0.18 },
     { wave: 'triangle', from: NOTE(19), start: 0.08, duration: 0.16, volume: 0.18 },
   ],
+  crash: [{ wave: 'sine', from: 150, to: 38, start: 0, duration: 0.38, volume: 0.5 }],
+}
+
+interface Noise {
+  duration: number
+  cutoff: number
+  volume: number
+}
+
+const NOISES: Partial<Record<SoundName, Noise>> = {
+  break: { duration: 0.25, cutoff: 1400, volume: 0.35 },
+  crash: { duration: 0.5, cutoff: 420, volume: 0.55 },
 }
 
 export class SoundBoard {
@@ -92,11 +104,9 @@ export class SoundBoard {
     if (this.master && this.context) this.master.gain.setTargetAtTime(muted ? 0 : 0.8, this.context.currentTime, 0.02)
   }
 
-  play(name: SoundName): void {
-    if (name === 'break') {
-      this.noise()
-      return
-    }
+  play(name: SoundName, loudness = 1): void {
+    const noise = NOISES[name]
+    if (noise) this.noise(noise, loudness)
     const notes = SOUNDS[name]
     if (!notes || !this.context || !this.master || this.muted) return
     if (name === 'tally') {
@@ -113,7 +123,7 @@ export class SoundBoard {
       oscillator.frequency.setValueAtTime(note.from, start)
       if (note.to) oscillator.frequency.exponentialRampToValueAtTime(note.to, end)
       gain.gain.setValueAtTime(0.0001, start)
-      gain.gain.exponentialRampToValueAtTime(note.volume, start + 0.01)
+      gain.gain.exponentialRampToValueAtTime(note.volume * loudness, start + 0.01)
       gain.gain.exponentialRampToValueAtTime(0.0001, end)
       oscillator.connect(gain).connect(this.master)
       oscillator.start(start)
@@ -121,9 +131,9 @@ export class SoundBoard {
     }
   }
 
-  private noise(): void {
+  private noise({ duration, cutoff, volume }: Noise, loudness: number): void {
     if (!this.context || !this.master || this.muted) return
-    const length = Math.floor(this.context.sampleRate * 0.25)
+    const length = Math.floor(this.context.sampleRate * duration)
     const buffer = this.context.createBuffer(1, length, this.context.sampleRate)
     const data = buffer.getChannelData(0)
     for (let i = 0; i < length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / length)
@@ -131,9 +141,9 @@ export class SoundBoard {
     source.buffer = buffer
     const filter = this.context.createBiquadFilter()
     filter.type = 'lowpass'
-    filter.frequency.value = 1400
+    filter.frequency.value = cutoff
     const gain = this.context.createGain()
-    gain.gain.value = 0.35
+    gain.gain.value = volume * loudness
     source.connect(filter).connect(gain).connect(this.master)
     source.start()
   }

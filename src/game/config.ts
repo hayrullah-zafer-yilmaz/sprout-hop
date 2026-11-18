@@ -46,9 +46,22 @@ export const EFFECTS = {
   coinPopLife: 0.6,
   lifePopSpeed: 3,
   lifePopLife: 1.1,
-  debrisCount: 24,
+  debrisCount: 32,
   debrisGravity: 40,
   debrisLife: 1.4,
+  quakeDecay: 2.4,
+  quakeReach: 10,
+}
+
+export const ROCKS = {
+  period: 3.4,
+  warning: 1,
+  delay: 0.4,
+  stagger: 0.5,
+  groupGap: 6,
+  gravity: 46,
+  maxFall: 30,
+  dropHeight: 16,
 }
 
 export const SIZES = {
@@ -56,5 +69,6 @@ export const SIZES = {
   slime: { w: 0.86, h: 0.7 },
   spiky: { w: 0.86, h: 0.8 },
   mover: { w: 3, h: 0.5 },
+  rock: { w: 0.9, h: 0.9 },
   goalHeight: 9,
 }

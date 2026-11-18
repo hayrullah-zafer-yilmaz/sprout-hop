@@ -3,7 +3,7 @@ export type Locale = 'en' | 'tr'
 const en = {
   tagline: 'A 2.5D platformer built with Vue 3 and TresJS',
   levelWord: 'Level',
-  levelNames: { meadow: 'Sunny Meadow', falls: 'Misty Falls' },
+  levelNames: { meadow: 'Sunny Meadow', falls: 'Misty Falls', magma: 'Magma Mountain' },
   levelPicker: 'Level',
   nextLevel: 'Next level',
   finalText: 'You cleared the last level. Well played!',
@@ -19,7 +19,7 @@ const en = {
   sound: 'Sound',
   or: 'or',
   gamepad: 'Gamepads work too: stick or D-pad to move, A to jump, X to run, Start to pause.',
-  tip: 'Hit crates from below, stomp the purple slimes and steer clear of the spiky ones.',
+  tip: 'Hit crates from below, stomp the purple slimes and steer clear of the spiky ones. When a shadow grows on the ground, step aside: a rock is about to land there.',
   score: 'Score',
   coins: 'Coins',
   lives: 'Lives',
@@ -59,7 +59,7 @@ export type Messages = typeof en
 const tr: Messages = {
   tagline: 'Vue 3 ve TresJS ile yapılmış 2.5D platform oyunu',
   levelWord: 'Bölüm',
-  levelNames: { meadow: 'Güneşli Çayır', falls: 'Sisli Şelale' },
+  levelNames: { meadow: 'Güneşli Çayır', falls: 'Sisli Şelale', magma: 'Magma Dağı' },
   levelPicker: 'Bölüm',
   nextLevel: 'Sonraki bölüm',
   finalText: 'Son bölümü de bitirdiniz. Tebrikler!',
@@ -76,7 +76,7 @@ const tr: Messages = {
   or: 'veya',
   gamepad:
     'Oyun kumandası da desteklenir: hareket için analog çubuğu veya yön tuşlarını, zıplamak için A, koşmak için X, duraklatmak için Start tuşunu kullanın.',
-  tip: 'Sandıklara alttan vurun, mor jölelerin üstüne basın, dikenlilerden uzak durun.',
+  tip: 'Sandıklara alttan vurun, mor jölelerin üstüne basın, dikenlilerden uzak durun. Yerde büyüyen bir gölge görürseniz kenara çekilin: oraya taş düşecek.',
   score: 'Puan',
   coins: 'Altın',
   lives: 'Can',

@@ -1,4 +1,4 @@
-import { SIZES } from './config'
+import { ROCKS, SIZES } from './config'
 import type { Body, Box, Point } from './collision'
 import type { EnemyKind, EnemySpawn, MoverSpawn, Spawn } from './level'
 
@@ -19,6 +19,7 @@ export type GameEvent =
   | 'stomp'
   | 'bump'
   | 'break'
+  | 'crash'
   | 'life'
   | 'die'
   | 'respawn'
@@ -69,6 +70,16 @@ export interface Mover extends Box {
   dy: number
 }
 
+export type RockState = 'resting' | 'warning' | 'falling'
+
+export interface Rock extends Body {
+  state: RockState
+  timer: number
+  top: number
+  floor: number | null
+  active: boolean
+}
+
 export interface Checkpoint extends Point {
   area: Box
   active: boolean
@@ -91,6 +102,7 @@ export interface Pop extends Point {
 
 export interface Debris extends Point {
   active: boolean
+  kind: 'brick' | 'rock'
   vx: number
   vy: number
   spin: number
@@ -172,6 +184,24 @@ export function createMover({ x, y, axis, min, max }: MoverSpawn): Mover {
   }
 }
 
+export function createRock({ x }: Spawn, delay: number): Rock {
+  const { w, h } = SIZES.rock
+  return {
+    x: x + (1 - w) / 2,
+    y: ROCKS.dropHeight,
+    w,
+    h,
+    vx: 0,
+    vy: 0,
+    onGround: false,
+    state: 'resting',
+    timer: delay,
+    top: ROCKS.dropHeight,
+    floor: null,
+    active: false,
+  }
+}
+
 export function createCheckpoint({ x, y }: Spawn): Checkpoint {
   return { x, y, area: { x, y, w: 1, h: 2.5 }, active: false, activatedAt: 0 }
 }
@@ -185,5 +215,5 @@ export function createPop(): Pop {
 }
 
 export function createDebris(): Debris {
-  return { active: false, x: 0, y: 0, vx: 0, vy: 0, spin: 0, angle: 0, age: 0 }
+  return { active: false, kind: 'brick', x: 0, y: 0, vx: 0, vy: 0, spin: 0, angle: 0, age: 0 }
 }

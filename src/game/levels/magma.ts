@@ -1,0 +1,17 @@
+export const MAGMA = [
+  '                          r                               r   r                                                  r   r   r   r   r                           r                      r   r',
+  '',
+  '                                                                                                                                                    L',
+  '',
+  '                                                                                                                                                                                                    ooo',
+  '                                                                                                                                                  ooooo',
+  '                                                                                                                                               V  XXXXX',
+  '                    o   o                                           o o o o                                                                                              oo                            X',
+  '                                      oo    oo                                          ooo                            C                                           oo                                 XX',
+  '           C         BCB                            C                                                                                                                                                XXX',
+  '       ooo                    oo                                oo m      M               X           o o o                        oo                                                               XXXX',
+  '                                                                                         XX                                                                             XXXX                       XXXXX',
+  '   P                     ooo         XXXX  XXXX       s     o                        s  XXX      K       s         o   o   o   o               v          s       XXXX  XXXX          o      k    XXXXXX   F',
+  '################  ################   XXXX  XXXX  ##################           ##########XXX##########--------###########################  ####################### XXXX  XXXX  ####################XXXXXX##########',
+  '################  ################   XXXX  XXXX  ##################           ##########XXX##########        ###########################  ####################### XXXX  XXXX  ####################XXXXXX##########',
+]

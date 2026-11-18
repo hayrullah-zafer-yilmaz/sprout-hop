@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.0 (2026-11-19)
+
+- A third level, Magma Mountain: a path over a lava lake, about 210 tiles wide, with basalt columns, a plank bridge, a lift and a moving platform.
+- Falling rocks. A growing shadow and crumbling pebbles warn where a rock will land, a falling rock costs a life and crushes enemies, and nearby rocks fall one after another. Each impact throws up dust and rubble, shakes the camera and plays a low crash.
+- Light basalt platforms over a dark lava lake that splashes when something falls in, with a smoking volcano, drifting smoke instead of clouds and sun, glowing lava falls that pour out of the cliffs, and rising embers.
+- The waterfall and lava levels now share one canyon builder, and the title screen explains the rock warning.
+- The level picker shows all three levels. The bot test finishes every level with every hero and waits for rocks when it has to.
+
 ## 0.4.0 (2026-11-18)
 
 - Redesigned heroes: a softer pear-shaped body, mitten hands, two-tone shoes, and a thin outline with a rim light that keeps them readable on busy backgrounds.

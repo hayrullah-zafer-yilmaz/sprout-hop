@@ -1,6 +1,6 @@
 import { CHARACTERS, type CharacterId, type Moveset } from './characters'
-import { EFFECTS, PHYSICS, RULES } from './config'
-import { ONE_WAY_TOLERANCE, moveX, moveY, overlaps, type Box, type Point, type TileLookup } from './collision'
+import { EFFECTS, PHYSICS, ROCKS, RULES } from './config'
+import { ONE_WAY_TOLERANCE, isSolid, moveX, moveY, overlaps, type Box, type Point, type TileLookup } from './collision'
 import {
   NO_INPUT,
   createCheckpoint,
@@ -11,6 +11,7 @@ import {
   createMover,
   createPlayer,
   createPop,
+  createRock,
   createSpikes,
   standingSpot,
   type Bump,
@@ -25,15 +26,34 @@ import {
   type Phase,
   type Player,
   type Pop,
+  type Rock,
 } from './entities'
-import { Tile, type LevelData, type TileId } from './level'
+import { Tile, type LevelData, type Spawn, type TileId } from './level'
 
-const DEBRIS_PIECES = [
-  { x: 0.25, y: 0.75, vx: -3, vy: 12 },
-  { x: 0.75, y: 0.75, vx: 3, vy: 12 },
-  { x: 0.25, y: 0.25, vx: -2.4, vy: 8 },
-  { x: 0.75, y: 0.25, vx: 2.4, vy: 8 },
-]
+const DEBRIS_PIECES: Record<Debris['kind'], { x: number; y: number; vx: number; vy: number }[]> = {
+  brick: [
+    { x: 0.25, y: 0.75, vx: -3, vy: 12 },
+    { x: 0.75, y: 0.75, vx: 3, vy: 12 },
+    { x: 0.25, y: 0.25, vx: -2.4, vy: 8 },
+    { x: 0.75, y: 0.25, vx: 2.4, vy: 8 },
+  ],
+  rock: [
+    { x: 0.2, y: 0.3, vx: -4.2, vy: 9 },
+    { x: 0.8, y: 0.3, vx: 4.2, vy: 9 },
+    { x: 0.35, y: 0.2, vx: -2, vy: 12 },
+    { x: 0.65, y: 0.2, vx: 2, vy: 12 },
+    { x: 0.5, y: 0.4, vx: 0.6, vy: 14 },
+  ],
+}
+
+function createRocks(spawns: Spawn[]): Rock[] {
+  let order = 0
+  return spawns.map((spawn, index) => {
+    const previous = spawns[index - 1]
+    order = previous && spawn.x - previous.x <= ROCKS.groupGap ? order + 1 : 0
+    return createRock(spawn, ROCKS.delay + order * ROCKS.stagger)
+  })
+}
 
 export interface WorldOptions {
   character?: CharacterId
@@ -61,6 +81,7 @@ export class World {
   readonly coins: Coin[]
   readonly spikes: Box[]
   readonly movers: Mover[]
+  readonly rocks: Rock[]
   readonly checkpoints: Checkpoint[]
   readonly goal: Goal
   readonly pops: Pop[] = Array.from({ length: EFFECTS.popCount }, createPop)
@@ -76,6 +97,7 @@ export class World {
   coinsCollected = 0
   lives: number
   time = RULES.levelTime
+  quake = 0
   respawn: Point
 
   private moves: Moveset = CHARACTERS.sprout.moves
@@ -95,6 +117,7 @@ export class World {
     this.coins = level.coins.map(createCoin)
     this.spikes = level.spikes.map(createSpikes)
     this.movers = level.movers.map(createMover)
+    this.rocks = createRocks(level.rocks)
     this.checkpoints = level.checkpoints.map(createCheckpoint)
     this.goal = createGoal(level.goal)
     this.totalCoins = this.coins.length + this.tiles.filter((tile) => tile === Tile.Crate).length
@@ -124,6 +147,7 @@ export class World {
         this.updateMovers(dt)
         this.updatePlayer(dt, input)
         this.updateEnemies(dt)
+        this.updateRocks(dt)
         this.checkInteractions(input)
         this.updateTimer(dt)
         break
@@ -134,6 +158,7 @@ export class World {
         this.updateMovers(dt)
         this.updatePlayer(dt, NO_INPUT)
         this.updateEnemies(dt)
+        this.updateRocks(dt)
         this.updateGoal(dt)
         break
       default:
@@ -284,6 +309,74 @@ export class World {
     return this.tileAt(Math.floor(frontX), Math.floor(enemy.y - 0.1)) === Tile.Empty
   }
 
+  private updateRocks(dt: number): void {
+    for (const rock of this.rocks) {
+      if (!rock.active) {
+        if (Math.abs(rock.x - this.player.x) > RULES.activationDistance) continue
+        rock.active = true
+      }
+      if (rock.state === 'falling') {
+        this.dropRock(rock, dt)
+        continue
+      }
+      rock.timer -= dt
+      if (rock.state === 'resting' && rock.timer <= ROCKS.warning) {
+        rock.state = 'warning'
+        rock.floor = this.floorBelow(rock)
+      }
+      if (rock.state === 'warning' && rock.timer <= 0) {
+        rock.state = 'falling'
+        rock.y = rock.top
+        rock.vy = 0
+      }
+    }
+  }
+
+  private floorBelow(rock: Rock): number | null {
+    const left = Math.floor(rock.x)
+    const right = Math.floor(rock.x + rock.w)
+    for (let y = Math.min(this.height, Math.floor(rock.top)) - 1; y >= 0; y--) {
+      for (let x = left; x <= right; x++) {
+        const tile = this.tileAt(x, y)
+        if (isSolid(tile) || tile === Tile.Plank) return y + 1
+      }
+    }
+    return null
+  }
+
+  private dropRock(rock: Rock, dt: number): void {
+    rock.vy = Math.max(rock.vy - ROCKS.gravity * dt, -ROCKS.maxFall)
+    const landed = moveY(this.lookup, rock, rock.vy * dt, rock.y).landed
+    this.crushEnemies(rock)
+    if (landed) this.crashRock(rock)
+    else if (rock.y < RULES.enemyFallLimit) this.resetRock(rock)
+  }
+
+  private crushEnemies(rock: Rock): void {
+    for (const enemy of this.enemies) {
+      if (!enemy.alive || !overlaps(rock, enemy)) continue
+      enemy.alive = false
+      enemy.flipped = true
+      enemy.vy = PHYSICS.knockBounce
+      enemy.diedAt = this.clock
+    }
+  }
+
+  private crashRock(rock: Rock): void {
+    this.spawnDebris(rock.x, rock.y, 'rock')
+    const distance = Math.abs(rock.x + rock.w / 2 - (this.player.x + this.player.w / 2))
+    this.quake = Math.max(this.quake, Math.max(0, 1 - distance / EFFECTS.quakeReach))
+    this.emit('crash')
+    this.resetRock(rock)
+  }
+
+  private resetRock(rock: Rock): void {
+    rock.state = 'resting'
+    rock.timer = ROCKS.period
+    rock.y = rock.top
+    rock.vy = 0
+  }
+
   private animateDefeat(enemy: Enemy, dt: number): void {
     if (enemy.flipped) {
       fall(enemy, PHYSICS.gravityDown, dt)
@@ -298,7 +391,7 @@ export class World {
     if (this.phase !== 'playing') return
     this.collectCoins()
     if (this.touchEnemies(input.jump)) return
-    if (this.touchesSpikes()) {
+    if (this.touchesSpikes() || this.hitByRock()) {
       this.killPlayer(false)
       return
     }
@@ -345,6 +438,10 @@ export class World {
 
   private touchesSpikes(): boolean {
     return this.player.invulnerable <= 0 && this.spikes.some((spikes) => overlaps(this.player, spikes))
+  }
+
+  private hitByRock(): boolean {
+    return this.player.invulnerable <= 0 && this.rocks.some((rock) => rock.state === 'falling' && overlaps(this.player, rock))
   }
 
   private reachCheckpoints(): void {
@@ -401,7 +498,7 @@ export class World {
 
   private breakBrick(x: number, y: number): void {
     this.setTile(x, y, Tile.Empty)
-    this.spawnDebris(x, y)
+    this.spawnDebris(x, y, 'brick')
     this.score += RULES.brickScore
     this.emit('break')
   }
@@ -446,12 +543,13 @@ export class World {
     })
   }
 
-  private spawnDebris(x: number, y: number): void {
-    for (const piece of DEBRIS_PIECES) {
+  private spawnDebris(x: number, y: number, kind: Debris['kind']): void {
+    for (const piece of DEBRIS_PIECES[kind]) {
       const debris = this.debris.find((item) => !item.active)
       if (!debris) return
       overwrite(debris, {
         active: true,
+        kind,
         x: x + piece.x,
         y: y + piece.y,
         vx: piece.vx,
@@ -464,6 +562,7 @@ export class World {
   }
 
   private updateEffects(dt: number): void {
+    this.quake = Math.max(0, this.quake - EFFECTS.quakeDecay * dt)
     for (let i = this.bumps.length - 1; i >= 0; i--) {
       this.bumps[i].t -= dt
       if (this.bumps[i].t <= 0) this.bumps.splice(i, 1)

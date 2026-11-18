@@ -37,6 +37,7 @@ export interface LevelData {
   enemies: EnemySpawn[]
   spikes: Spawn[]
   movers: MoverSpawn[]
+  rocks: Spawn[]
   checkpoints: Spawn[]
   goal: Spawn
 }
@@ -63,6 +64,7 @@ export function parseLevel(rows: string[]): LevelData {
   const coins: Spawn[] = []
   const enemies: EnemySpawn[] = []
   const spikes: Spawn[] = []
+  const rocks: Spawn[] = []
   const checkpoints: Spawn[] = []
   const moverStarts: { x: number; y: number; axis: 'x' | 'y' }[] = []
   const moverEnds: { x: number; y: number; axis: 'x' | 'y' }[] = []
@@ -91,6 +93,9 @@ export function parseLevel(rows: string[]): LevelData {
           break
         case '^':
           spikes.push({ x, y })
+          break
+        case 'r':
+          rocks.push({ x, y })
           break
         case 'K':
           checkpoints.push({ x, y })
@@ -134,5 +139,6 @@ export function parseLevel(rows: string[]): LevelData {
       : { x: from.x, y: from.y, axis: 'y' as const, min: from.y, max: to.y }
   })
 
-  return { width, height, tiles, start, coins, enemies, spikes, movers, checkpoints, goal }
+  rocks.sort((a, b) => a.x - b.x)
+  return { width, height, tiles, start, coins, enemies, spikes, movers, rocks, checkpoints, goal }
 }

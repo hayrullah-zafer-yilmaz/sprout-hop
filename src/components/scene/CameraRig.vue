@@ -14,6 +14,7 @@ const LOOK_AHEAD = 1.6
 const HEIGHT = { offset: 1.4, min: 6.2, max: 9.5, tilt: 2.4 }
 const SHOWCASE = { zoom: 0.5, shift: 0.5, height: 0.85, tilt: 1.1 }
 const FOLLOW_RATE = { x: 7, y: 3.5, lookAhead: 2, zoom: 3 }
+const QUAKE = { strength: 0.22, speed: 55 }
 
 const world = useWorld()
 const theme = useTheme()
@@ -71,8 +72,11 @@ function follow(dt: number): void {
   view.y = damp(view.y, target.y, FOLLOW_RATE.y, dt)
   view.tilt = damp(view.tilt, target.tilt, FOLLOW_RATE.zoom, dt)
 
-  cam.position.set(view.x, view.y + view.tilt, view.distance)
-  cam.lookAt(view.x, view.y, 0)
+  const shake = world.quake ** 2 * QUAKE.strength
+  const jitterX = Math.sin(world.clock * QUAKE.speed) * shake
+  const jitterY = Math.cos(world.clock * QUAKE.speed * 1.3) * shake
+  cam.position.set(view.x + jitterX, view.y + view.tilt + jitterY, view.distance)
+  cam.lookAt(view.x + jitterX, view.y + jitterY, 0)
 
   const light = sun.value
   if (!light) return

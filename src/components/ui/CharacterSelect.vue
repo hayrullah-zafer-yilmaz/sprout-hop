@@ -207,16 +207,18 @@ const ratings = computed(() => [
 
 .levels {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
 }
 
 .level {
   display: flex;
   align-items: center;
-  gap: 10px;
-  height: 44px;
-  padding: 0 12px;
+  gap: 8px;
+  min-height: 44px;
+  padding: 6px 10px;
+  text-align: left;
+  line-height: 1.2;
   border-radius: 8px;
   border: 1px solid rgba(157, 179, 209, 0.2);
   background: rgba(255, 255, 255, 0.04);

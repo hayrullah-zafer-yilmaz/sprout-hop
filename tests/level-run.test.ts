@@ -27,14 +27,34 @@ function gapWithin(world: World, from: number, distance: number, y: number): boo
   return false
 }
 
+function rockDanger(world: World): 'flee' | 'wait' | null {
+  const p = world.player
+  for (const rock of world.rocks) {
+    if (!rock.active) continue
+    const left = rock.x - 0.15
+    const right = rock.x + rock.w + 0.15
+    const threat = rock.state !== 'resting' || rock.timer < 1.1
+    if (!threat) continue
+    if (p.x + p.w > left && p.x < right) return 'flee'
+    const ahead = left - (p.x + p.w)
+    if (ahead > 0 && ahead < 1.3) return 'wait'
+  }
+  return null
+}
+
 function decide(world: World, held: { jump: number; still: number }): InputState {
   const p = world.player
   const front = p.x + p.w
   const feet = p.y
   let axis = 1
   let jump = held.jump > 0
+  const danger = p.onGround ? rockDanger(world) : null
 
-  if (p.platform && p.platform.axis === 'x') {
+  if (danger === 'flee') {
+    axis = 1
+  } else if (danger === 'wait') {
+    axis = 0
+  } else if (p.platform && p.platform.axis === 'x') {
     const mover = p.platform
     axis = p.x + p.w < mover.x + mover.w - 0.25 ? 1 : 0
     if (mover.x >= mover.max - 0.2) {

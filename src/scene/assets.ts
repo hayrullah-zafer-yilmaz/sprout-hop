@@ -1,5 +1,7 @@
 import {
   BoxGeometry,
+  CanvasTexture,
+  CircleGeometry,
   ConeGeometry,
   CylinderGeometry,
   Euler,
@@ -9,13 +11,14 @@ import {
   MeshBasicMaterial,
   MeshStandardMaterial,
   Quaternion,
+  SRGBColorSpace,
   Shape,
   SphereGeometry,
   Vector3,
   type BufferGeometry,
 } from 'three'
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js'
-import { getBrickTexture } from './textures'
+import { createRandom, getBrickTexture } from './textures'
 
 type Vec3 = [number, number, number]
 
@@ -130,4 +133,66 @@ export const spikyParts = {
   eyeWhite,
   pupil: new MeshBasicMaterial({ color: '#dc2626' }),
   brow: new MeshBasicMaterial({ color: '#0f172a' }),
+}
+
+function boulder(radius: number, seed: number): BufferGeometry {
+  const geometry = new IcosahedronGeometry(radius, 1)
+  const random = createRandom(seed)
+  const position = geometry.attributes.position
+  const point = new Vector3()
+  const offsets = new Map<string, number>()
+  for (let i = 0; i < position.count; i++) {
+    point.fromBufferAttribute(position, i)
+    const key = `${point.x.toFixed(4)},${point.y.toFixed(4)},${point.z.toFixed(4)}`
+    let offset = offsets.get(key)
+    if (offset === undefined) {
+      offset = 0.82 + random() * 0.32
+      offsets.set(key, offset)
+    }
+    point.multiplyScalar(offset)
+    position.setXYZ(i, point.x, point.y, point.z)
+  }
+  geometry.computeVertexNormals()
+  return geometry
+}
+
+function shadowTexture(): CanvasTexture {
+  const size = 64
+  const canvas = document.createElement('canvas')
+  canvas.width = size
+  canvas.height = size
+  const ctx = canvas.getContext('2d')
+  if (!ctx) throw new Error('Canvas 2D is not available')
+  const gradient = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2)
+  gradient.addColorStop(0, 'rgba(255, 255, 255, 1)')
+  gradient.addColorStop(0.55, 'rgba(255, 255, 255, 0.75)')
+  gradient.addColorStop(1, 'rgba(255, 255, 255, 0)')
+  ctx.fillStyle = gradient
+  ctx.fillRect(0, 0, size, size)
+  const texture = new CanvasTexture(canvas)
+  texture.colorSpace = SRGBColorSpace
+  return texture
+}
+
+export const rockParts = {
+  body: boulder(0.52, 7),
+  rubble: boulder(0.17, 11),
+  basalt: new MeshStandardMaterial({ color: '#5a4b47', roughness: 0.85, flatShading: true, emissive: '#ff4a0a', emissiveIntensity: 0.12 }),
+  shadow: new CircleGeometry(0.62, 32).rotateX(-Math.PI / 2),
+  shade: new MeshBasicMaterial({
+    color: '#000000',
+    map: shadowTexture(),
+    transparent: true,
+    opacity: 0.78,
+    depthWrite: false,
+    polygonOffset: true,
+    polygonOffsetFactor: -2,
+  }),
+  puff: new IcosahedronGeometry(0.3, 1),
+  dust: new MeshStandardMaterial({ color: '#8a7f7a', roughness: 1, flatShading: true }),
+}
+
+export const lavaParts = {
+  drop: new IcosahedronGeometry(0.11, 0),
+  molten: new MeshBasicMaterial({ color: '#ffb347' }),
 }

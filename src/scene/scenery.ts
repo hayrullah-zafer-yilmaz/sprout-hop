@@ -15,9 +15,11 @@ import {
 } from 'three'
 import { Tile, tileAt, type LevelData } from '../game/level'
 import { Batch, lowPoly, pick, type Placement } from './batch'
-import { buildFallsScenery, type Animated, type Scenery } from './falls'
+import type { Animated, Scenery } from './canyon'
+import { buildFallsScenery } from './falls'
 import { createRandom, createSkyTexture } from './textures'
 import type { DecorPalette, Theme } from './themes'
+import { buildVolcanoScenery } from './volcano'
 
 const MARGIN = 60
 const VALLEY = -11
@@ -34,7 +36,8 @@ export function buildDecorations(level: LevelData, palette: DecorPalette, seed: 
   const random = createRandom(seed)
   const bushes = new Batch(new IcosahedronGeometry(0.42, 1), lowPoly(palette.bush), true)
   const stems = new Batch(new CylinderGeometry(0.025, 0.025, 1, 5), lowPoly(palette.stem))
-  const flowers = new Batch(new IcosahedronGeometry(0.09, 0), lowPoly('#ffffff', { roughness: 0.6 }))
+  const glow = palette.glow ? { emissive: palette.glow, emissiveIntensity: 0.9 } : {}
+  const flowers = new Batch(new IcosahedronGeometry(0.09, 0), lowPoly('#ffffff', { roughness: 0.6, ...glow }))
   const tufts = new Batch(new ConeGeometry(0.06, 1, 4), lowPoly(palette.tuft))
   const rocks = new Batch(new IcosahedronGeometry(0.22, 0), lowPoly(palette.rock), true)
   const petals = palette.petals
@@ -86,14 +89,14 @@ function createSky(colors: Theme['sky']): Mesh {
   return sky
 }
 
-function createSun(): Mesh {
+function createSun([core, glow]: NonNullable<Theme['sunDisc']>): Mesh {
   const disc = (radius: number, color: string, opacity: number) =>
     new Mesh(
       new CircleGeometry(radius, 40),
       new MeshBasicMaterial({ color, fog: false, transparent: true, opacity, depthWrite: false }),
     )
-  const sun = disc(9, '#fff6cf', 0.95)
-  const halo = disc(16, '#fff3c4', 0.25)
+  const sun = disc(9, core, 0.95)
+  const halo = disc(16, glow, 0.25)
   halo.position.z = -0.1
   sun.add(halo)
   sun.position.z = -190
@@ -164,7 +167,7 @@ class CloudField {
   private readonly span: number
   private readonly dummy = new Object3D()
 
-  constructor(random: () => number, left: number, right: number) {
+  constructor(random: () => number, left: number, right: number, style: NonNullable<Theme['clouds']>) {
     this.left = left
     this.span = right - left
     for (let x = left; x < right; x += 12 + random() * 14) {
@@ -176,7 +179,7 @@ class CloudField {
       this.clouds.push({ x, y: 12 + random() * 7, z: -22 - random() * 22, puffs })
     }
     const total = this.clouds.reduce((sum, cloud) => sum + cloud.puffs.length, 0)
-    const material = lowPoly('#ffffff', { emissive: new Color('#dfefff'), emissiveIntensity: 0.35 })
+    const material = lowPoly(style.color, { emissive: new Color(style.glow), emissiveIntensity: style.intensity })
     this.mesh = new InstancedMesh(new IcosahedronGeometry(1, 1), material, total)
     this.mesh.frustumCulled = false
     this.writeAll()
@@ -223,33 +226,42 @@ function buildWaterfallScenery(random: () => number, left: number, right: number
   return { objects: [...mountains, ...falls.objects], animated: falls.animated }
 }
 
+const BUILDERS: Record<Theme['backdrop'], typeof buildMeadowScenery> = {
+  meadow: buildMeadowScenery,
+  falls: buildWaterfallScenery,
+  volcano: buildVolcanoScenery,
+}
+
 export class Backdrop {
   readonly group = new Group()
   private readonly sky: Mesh
-  private readonly sun = createSun()
-  private readonly clouds: CloudField
+  private readonly sun: Mesh | null
+  private readonly clouds: CloudField | null
   private readonly animated: Animated[]
 
   constructor(level: LevelData, theme: Theme) {
     const random = createRandom(theme.seeds.backdrop)
     const left = -MARGIN
     const right = level.width + MARGIN
-    const build = theme.backdrop === 'falls' ? buildWaterfallScenery : buildMeadowScenery
-    const scenery = build(random, left, right, level.width)
+    const scenery = BUILDERS[theme.backdrop](random, left, right, level.width)
     this.sky = createSky(theme.sky)
-    this.clouds = new CloudField(random, left, right)
+    this.sun = theme.sunDisc ? createSun(theme.sunDisc) : null
+    this.clouds = theme.clouds ? new CloudField(random, left, right, theme.clouds) : null
     this.animated = scenery.animated
     this.group.name = 'backdrop'
-    this.group.add(this.sky, this.sun, ...scenery.objects, this.clouds.mesh)
+    this.group.add(this.sky)
+    if (this.sun) this.group.add(this.sun)
+    this.group.add(...scenery.objects)
+    if (this.clouds) this.group.add(this.clouds.mesh)
   }
 
   update(camera: Camera | undefined, delta: number): void {
     const dt = Math.min(delta, 0.1)
     if (camera) {
       this.sky.position.set(camera.position.x, camera.position.y + 12, this.sky.position.z)
-      this.sun.position.set(camera.position.x + 55, camera.position.y + 34, this.sun.position.z)
+      this.sun?.position.set(camera.position.x + 55, camera.position.y + 34, this.sun.position.z)
     }
-    this.clouds.drift(dt * CLOUD_SPEED)
+    this.clouds?.drift(dt * CLOUD_SPEED)
     for (const item of this.animated) item.update(dt)
   }
 }
