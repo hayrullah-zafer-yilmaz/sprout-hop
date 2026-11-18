@@ -1,0 +1,85 @@
+import { describe, expect, it } from 'vitest'
+import { isSolid } from '../src/game/collision'
+import type { InputState } from '../src/game/entities'
+import { LEVEL_ONE, Tile, parseLevel } from '../src/game/level'
+import { World } from '../src/game/world'
+
+const STEP = 1 / 120
+
+function groundAhead(world: World, x: number, y: number): boolean {
+  for (let ty = Math.floor(y - 0.5); ty >= 0; ty--) {
+    const tile = world.tileAt(Math.floor(x), ty)
+    if (isSolid(tile) || tile === Tile.Plank) return true
+  }
+  return false
+}
+
+function gapWidth(world: World, from: number, y: number): number {
+  let width = 0
+  while (width < 16 && !groundAhead(world, from + width + 0.5, y)) width++
+  return width
+}
+
+function decide(world: World, held: { jump: number }): InputState {
+  const p = world.player
+  const front = p.x + p.w
+  const feet = p.y
+  let axis = 1
+  let jump = held.jump > 0
+
+  if (p.platform && p.platform.axis === 'x') {
+    const mover = p.platform
+    axis = p.x + p.w < mover.x + mover.w - 0.25 ? 1 : 0
+    if (mover.x >= mover.max - 0.2) {
+      axis = 1
+      jump = true
+      held.jump = 0.3
+    }
+  } else if (p.onGround) {
+    const wall = isSolid(world.tileAt(Math.floor(front + 0.3), Math.floor(feet + 0.1)))
+    const gapStart = Math.floor(front + 0.2)
+    const gap = groundAhead(world, front + 0.6, feet) ? 0 : gapWidth(world, gapStart, feet)
+    const enemy = world.enemies.find(
+      (item) => item.alive && item.x > p.x && item.x - front < (item.kind === 'spiky' ? 2.4 : 1.6) && Math.abs(item.y - feet) < 1.5,
+    )
+    const spikes = world.spikes.some((spike) => spike.x > p.x && spike.x - front < 1.2 && Math.abs(spike.y - feet) < 0.5)
+
+    if (gap > 6) {
+      const mover = world.movers.find((item) => item.axis === 'x' && item.x > p.x - 4 && item.x < p.x + 16)
+      const near = mover && mover.x - front < 1.2 && mover.wait > 0 && mover.dir === 1
+      axis = 0
+      if (near) {
+        axis = 1
+        jump = true
+        held.jump = 0.35
+      }
+    } else if (wall || gap > 0 || enemy || spikes) {
+      jump = true
+      held.jump = 0.5
+    }
+  } else if (p.platform === null && p.vy < 0) {
+    const below = world.movers.find((item) => item.axis === 'x' && p.x + p.w > item.x && p.x < item.x + item.w)
+    if (below) axis = 0
+  }
+
+  return { axis, jump, jumpPressed: jump && held.jump >= 0.29 && p.onGround, run: false }
+}
+
+describe('level one', () => {
+  it('can be finished by a simple bot that only runs right and jumps', () => {
+    const world = new World(parseLevel(LEVEL_ONE))
+    const held = { jump: 0 }
+    let wasJumping = false
+    let seconds = 0
+    while (seconds < 240 && world.phase !== 'complete' && world.phase !== 'gameover') {
+      const state = world.phase === 'playing' ? decide(world, held) : { axis: 0, jump: false, jumpPressed: false, run: false }
+      const pressed = state.jumpPressed && !wasJumping
+      wasJumping = state.jump
+      world.step(STEP, { ...state, jumpPressed: pressed })
+      held.jump = Math.max(0, held.jump - STEP)
+      seconds += STEP
+    }
+    expect(world.phase).toBe('complete')
+    expect(world.lives).toBeGreaterThan(0)
+  })
+})
