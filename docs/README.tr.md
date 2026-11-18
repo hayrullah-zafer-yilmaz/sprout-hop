@@ -11,14 +11,14 @@
 
 ## Özellikler
 
-- **Seçilebilen üç kahraman**: Sprout dengelidir, Zip en hızlı koşar, Bun en yükseğe zıplar ve zıplama tuşunu basılı tuttuğunuzda süzülür. Seçtiğiniz kahraman canlı bir 3B önizlemeyle gösterilir.
+- **Seçilebilen üç kahraman**: Sprout dengelidir, Zip en hızlı koşar, Bun en yükseğe zıplar ve zıplama tuşunu basılı tuttuğunuzda süzülür. Seçtiğiniz kahraman canlı bir 3B önizlemeyle gösterilir. Her kahramanın kendi kıyafeti ve hareketle değişen bir yüzü var: göz kırpar, koşarken gözlerini kısar, havada şaşırır ve bayrakta sevinir.
 - **İki bölüm**: her birinin kendi görünümü ve kendi en iyi puanı var. Bir bölümü bitirdiğinizde sıradaki bölüm beş saniyelik bir geri sayımın ardından kendiliğinden başlar. Kahraman ekranında da istediğiniz bölümü seçebilirsiniz.
   - **Güneşli Çayır** yaklaşık 220 karo genişliğindedir. Çukurlar, merdivenler, tek yönlü kalaslar, dikenler, bir kontrol noktası, biri yatay biri dikey iki hareketli platform ve sonunda bir bayrak var.
   - **Sisli Şelale** yaklaşık 200 karo genişliğinde bir nehir kanyonudur. Nehrin üstünde basamak taşları, tahta bir köprü, bir asansör ve hareketli bir platform var. Arka planda üç şelale nehre dökülür; sis yükselir, dipte köpük oluşur ve bir gökkuşağı görünür.
 - **İnce ayarlı platform kontrolleri**: hızlanma ve frenleme, koşma tuşu, basılı tutma süresine göre değişen zıplama yüksekliği, "coyote time" ve zıplama tamponu.
 - **Alttan vurulan bloklar**: altın sandıkları, can sandıkları ve kırılan tuğlalar.
 - **İki düşman türü**: üstüne basılarak yenilen jöleler (art arda basınca puan katlanır) ve üstünden atlanması gereken dikenli toplar.
-- **Hiç asset dosyası yok**: tüm dokular açılışta bir canvas üzerine çizilir, tüm sesler Web Audio API ile sentezlenir. Modeller Three.js temel geometrileriyle kurulur.
+- **Hiç asset dosyası yok**: tüm dokular açılışta bir canvas üzerine çizilir, tüm sesler Web Audio API ile sentezlenir. Modeller Three.js temel geometrileriyle kurulur; kahramanların yüzleri de canvas üzerine çizilir.
 - **Puan, altın, can ve süre**. Kalan süre bonus puana dönüşür, her bölümün en iyi puanı `localStorage` içinde saklanır.
 - **Klavye ve oyun kumandası** desteği, duraklatma menüsü, İngilizce ve Türkçe arayüz.
 
@@ -76,11 +76,12 @@ Oyun mantığı ile çizim birbirinden ayrıdır.
   Dünya 1/120 saniyelik sabit adımlarla ilerler. Düz kod olduğu için Vitest onu doğrudan test eder; küçük bir bot her bölümü her kahramanla baştan sona oynar.
 - **`src/components/scene/LevelScene.vue`** her oyun için bir dünya oluşturur ve onu TresJS `useLoop().onBeforeRender` döngüsü içinde ilerletir. Karedeki sırayı `src/scene/context.ts` içindeki adlandırılmış öncelikler belirler: önce dünya ilerler, sonra modeller onun durumunu kopyalar, en son kamera ve gökyüzü takip eder.
 - **Her bölümün bir teması var** (`src/scene/themes.ts`): gökyüzü, sis, ışık, karo ve bitki renkleri ile hangi arka planın kurulacağı. Statik manzara her bölüm için tohumlu bir rastgele sayı üreteciyle bir kez oluşturulur ve yeniden başlatmalarda korunur. Çayırda tepeler ve vadide bir orman var. Şelalede ise kayalıklar, bir nehir ve suyu, sisi ve köpüğü her karede hareket eden şelaleler var (`src/scene/falls.ts`). Yalnızca oyun sırasında değişen parçalar yeniden kurulur.
+- **Kahramanlar** aynı gövde biçimini paylaşır; renk, kıyafet ve yüzle ayrışır (`src/scene/hero.ts`, `heroKit.ts`, `heroGear.ts`). Her yüz, gövdeye yansıtılan sekiz ifadelik bir canvas atlasıdır ve model her karede oyunun durumuna göre birini seçer (`heroFace.ts`). İnce bir dış çizgi ve yumuşak bir kenar ışığı, kahramanların kalabalık arka planlarda da kolayca seçilmesini sağlar.
 - **Çizim çağrısı sayısı düşük tutulur**:
   - Karolar, altınlar, bulutlar, efektler ve manzara `InstancedMesh` ile çizilir.
   - Düşmanlar geometri ve materyallerini paylaşır.
   - Gözler gibi çift parçalar tek geometride birleştirilir.
-  - Tipik bir kare yaklaşık 65 çizim çağrısıyla çizilir.
+  - Tipik bir kare çayırda yaklaşık 75, şelalede yaklaşık 85 çizim çağrısıyla çizilir.
 - **Vue reaktivitesi yalnızca HUD ve menüler için kullanılır.** 3B modeller bir kez çizilir, sonra her karede template ref üzerinden hareket ettirilir.
 
 ## Bölümleri düzenlemek
@@ -115,7 +116,7 @@ Yeni bir bölüm eklemek için haritasını `src/game/levels/` içinde yeni bir 
 src/
   game/              düz TypeScript ile kurallar: ayarlar, harita okuyucu, varlıklar, çarpışma, dünya
   game/levels/       ASCII bölüm haritaları ve oynanma sırası
-  scene/             Three.js kurucuları ve paylaşılan parçalar: dokular, temalar, karolar, manzara, şelaleler, modeller, bayrak
+  scene/             Three.js kurucuları ve paylaşılan parçalar: dokular, temalar, karolar, manzara, şelaleler, kahramanlar, modeller, bayrak
   app/               tarayıcı durumu ve servisler: arayüz durumu, i18n, giriş, ses
   components/scene/  dünyayı çizen Tres bileşenleri
   components/ui/     Vue HUD ve menüler

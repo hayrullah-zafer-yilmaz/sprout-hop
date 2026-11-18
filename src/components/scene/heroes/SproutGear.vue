@@ -2,54 +2,79 @@
 import { shallowRef } from 'vue'
 import { useLoop } from '@tresjs/core'
 import type { Group } from 'three'
-import { HERO, strideOf } from '../../../scene/hero'
+import { strideOf } from '../../../scene/hero'
+import { SCARF_Y, getSproutGear } from '../../../scene/heroGear'
 import { PRIORITY, useWorld } from '../../../scene/context'
+import { airborne } from './pose'
 
-const { center: CENTER, radius: RADIUS } = HERO
+type Vec3 = [number, number, number]
+
+const gear = getSproutGear()
+const LEAVES: { rotation: Vec3; scale: number }[] = [
+  { rotation: [0, Math.PI - 0.25, 0.42], scale: 0.92 },
+  { rotation: [0, 0.3, 0.5], scale: 1.08 },
+]
+const TAILS: { rotation: Vec3; length: number }[] = [
+  { rotation: [0, 0, -0.22], length: 1 },
+  { rotation: [0, 0.2, 0.28], length: 0.82 },
+]
 
 const world = useWorld()
 const sprout = shallowRef<Group>()
-const scarfTail = shallowRef<Group>()
+const tails = shallowRef<Group>()
 
 const { onBeforeRender } = useLoop()
 onBeforeRender(({ elapsed }) => {
   const p = world.player
   const stride = strideOf(p.vx)
   if (sprout.value) sprout.value.rotation.z = Math.sin(elapsed * 4) * 0.14 - p.vx * 0.03
-  if (scarfTail.value) {
+  if (tails.value) {
     const flutter = Math.sin(elapsed * 14) * 0.15 * (0.3 + stride)
-    scarfTail.value.rotation.x = 0.5 + stride * 0.7 + (p.onGround ? 0 : 0.4) + flutter
+    tails.value.rotation.x = 0.35 + stride * 0.75 + (airborne(p) ? 0.45 : 0) + flutter
   }
 }, PRIORITY.models)
 </script>
 
 <template>
-  <TresMesh :position="[0, CENTER - 0.25, 0]" :rotation="[Math.PI / 2, 0, 0]" cast-shadow>
-    <TresTorusGeometry :args="[0.336, 0.036, 8, 36]" />
-    <TresMeshStandardMaterial color="#2f6fde" :roughness="0.55" />
+  <TresMesh
+    :geometry="gear.scarf"
+    :material="gear.scarfSkin"
+    :position="[0, SCARF_Y, 0]"
+    :rotation="[Math.PI / 2 + 0.06, 0, 0]"
+    :scale="[1, 1, 1.7]"
+    cast-shadow
+  >
+    <TresMesh :geometry="gear.scarf" :material="gear.scarfOutline" />
   </TresMesh>
-  <TresGroup ref="scarfTail" :position="[0.1, CENTER - 0.25, -0.34]">
-    <TresMesh :position="[0, -0.1, 0]" :rotation="[0, 0, -0.25]">
-      <TresBoxGeometry :args="[0.09, 0.2, 0.04]" />
-      <TresMeshStandardMaterial color="#2f6fde" :roughness="0.55" />
-    </TresMesh>
-    <TresMesh :position="[0.06, -0.08, 0.01]" :rotation="[0, 0, 0.3]">
-      <TresBoxGeometry :args="[0.08, 0.16, 0.04]" />
-      <TresMeshStandardMaterial color="#2a62c8" :roughness="0.55" />
+  <TresMesh :geometry="gear.knot" :material="gear.knotSkin" :position="gear.knotPosition" cast-shadow>
+    <TresMesh :geometry="gear.knot" :material="gear.scarfOutline" />
+  </TresMesh>
+  <TresGroup ref="tails" :position="gear.knotPosition">
+    <TresMesh
+      v-for="tail in TAILS"
+      :key="tail.length"
+      :geometry="gear.tail"
+      :material="gear.tailSkin"
+      :rotation="tail.rotation"
+      :scale="[1, tail.length, 1]"
+      cast-shadow
+    >
+      <TresMesh :geometry="gear.tail" :material="gear.scarfOutline" />
     </TresMesh>
   </TresGroup>
-  <TresGroup ref="sprout" :position="[0, CENTER + RADIUS - 0.03, 0]">
-    <TresMesh :position="[0, 0.06, 0]">
-      <TresCylinderGeometry :args="[0.018, 0.026, 0.13, 6]" />
-      <TresMeshStandardMaterial color="#2f9e44" />
-    </TresMesh>
-    <TresMesh :position="[-0.1, 0.14, 0]" :rotation="[0, 0, 0.45]" :scale="[1.7, 0.5, 0.85]">
-      <TresSphereGeometry :args="[0.085, 12, 8]" />
-      <TresMeshStandardMaterial color="#51cf66" :roughness="0.5" />
-    </TresMesh>
-    <TresMesh :position="[0.1, 0.16, 0]" :rotation="[0, 0, -0.45]" :scale="[1.7, 0.5, 0.85]">
-      <TresSphereGeometry :args="[0.085, 12, 8]" />
-      <TresMeshStandardMaterial color="#51cf66" :roughness="0.5" />
+  <TresGroup ref="sprout" :position="[0, gear.sproutY, 0]">
+    <TresMesh :geometry="gear.stem" :material="gear.stemSkin" />
+    <TresMesh
+      v-for="leaf in LEAVES"
+      :key="leaf.scale"
+      :geometry="gear.leaf"
+      :material="gear.leafSkin"
+      :position="[0, 0.11, 0]"
+      :rotation="leaf.rotation"
+      :scale="leaf.scale"
+      cast-shadow
+    >
+      <TresMesh :geometry="gear.leaf" :material="gear.leafOutline" />
     </TresMesh>
   </TresGroup>
 </template>

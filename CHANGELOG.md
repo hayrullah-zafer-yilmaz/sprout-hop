@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.0 (2026-11-18)
+
+- Redesigned heroes: a softer pear-shaped body, mitten hands, two-tone shoes, and a thin outline with a rim light that keeps them readable on busy backgrounds.
+- Faces are drawn on a canvas atlas with eight expressions. The heroes blink, squint while running, gasp in the air, cheer at the flag, wink when picked, and show > < and x x when hit.
+- New gear: Sprout's knitted scarf and leaf sprout, Zip's goggles with glass lenses and swept hair spikes, and Bun's ears with a floppy tip and a fluffy tail.
+- The heroes lean into a run, swing their arms and roll their feet. On the title and hero screens they stand instead of hanging in a jump pose.
+- New portraits on the hero screen, in the HUD and as the title logo, a new favicon, and README GIFs that show the new look.
+
 ## 0.3.1 (2026-11-18)
 
 - After a cleared level, the next level now starts on its own after a five-second countdown. Moving to another button on the result screen cancels the countdown, and it waits while the window is in the background.

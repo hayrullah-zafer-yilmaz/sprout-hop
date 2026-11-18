@@ -11,14 +11,14 @@ A 2.5D side-scrolling platformer built with [Vue 3](https://vuejs.org), [TresJS]
 
 ## Features
 
-- **Three heroes to choose from**: Sprout is balanced, Zip runs the fastest, and Bun jumps the highest and glides while you hold jump. A live 3D preview shows the hero you pick.
+- **Three heroes to choose from**: Sprout is balanced, Zip runs the fastest, and Bun jumps the highest and glides while you hold jump. A live 3D preview shows the hero you pick. Each hero has its own outfit and a face that follows the action: they blink, squint while running, gasp in the air and cheer at the flag.
 - **Two levels**, each with its own look and its own best score. When you finish a level, the next one starts after a five-second countdown, and the hero screen lets you pick either level.
   - **Sunny Meadow** is about 220 tiles wide, with pits, stairs, one-way planks, spikes, a checkpoint, a horizontal and a vertical moving platform, and a flag at the end.
   - **Misty Falls** is a river canyon about 200 tiles wide, with stepping stones, a wooden bridge, a lift and a moving platform over the river. In the background, three waterfalls pour into the river, with rising mist, foam and a rainbow.
 - **Tuned platformer controls**: acceleration and braking, a run button, variable jump height, coyote time and jump buffering.
 - **Blocks you hit from below**: coin crates, life crates and breakable bricks.
 - **Two enemy types**: slimes you can stomp, with stomp combos, and spiky rollers you have to jump over.
-- **No asset files**: every texture is drawn on a canvas at startup and every sound is synthesized with the Web Audio API. Models are built from Three.js primitives.
+- **No asset files**: every texture is drawn on a canvas at startup and every sound is synthesized with the Web Audio API. Models are built from Three.js primitives, and the heroes' faces are drawn on a canvas too.
 - **Score, coins, lives and a timer**. Leftover time becomes bonus points, and the best score of each level is kept in `localStorage`.
 - **Keyboard and gamepad** input, a pause menu, and English and Turkish UI.
 
@@ -76,11 +76,12 @@ The game logic and the rendering are kept apart.
   The world advances in fixed steps of 1/120 s. Because it is plain code, Vitest tests it directly, and a small bot plays through every level with every hero.
 - **`src/components/scene/LevelScene.vue`** creates a world for each run and steps it from TresJS's `useLoop().onBeforeRender`. Named priorities in `src/scene/context.ts` set the order inside each frame: the world steps first, the models then copy its state, and the camera and the sky follow last.
 - **Each level has a theme** in `src/scene/themes.ts`: the sky, fog, light, tile and plant colors, and which backdrop to build. The static scenery is generated once per level from a seeded random generator and survives restarts. The meadow gets hills and a forest in the valley. The falls get cliffs, a river and waterfalls whose water, mist and foam move every frame (`src/scene/falls.ts`). Only the parts that change during a run are rebuilt.
+- **The heroes** share one body shape and differ in color, outfit and face (`src/scene/hero.ts`, `heroKit.ts`, `heroGear.ts`). Each face is a canvas atlas of eight expressions projected onto the body, and the model picks one from the game state every frame (`heroFace.ts`). A thin outline and a soft rim light keep the heroes readable against busy backgrounds.
 - **Draw calls are kept low**:
   - Tiles, coins, clouds, effects and scenery are drawn with `InstancedMesh`.
   - Enemies share their geometries and materials.
   - Paired parts such as eyes are merged into one geometry.
-  - A typical frame needs about 65 draw calls.
+  - A typical frame needs about 75 draw calls in the meadow and 85 at the falls.
 - **Vue reactivity is used only for the HUD and menus.** The 3D models render once and are then moved through template refs every frame.
 
 ## Editing the levels
@@ -115,7 +116,7 @@ To add a level, put its map in a new file in `src/game/levels/` and register it 
 src/
   game/              rules in plain TypeScript: config, map parser, entities, collision, world
   game/levels/       the ASCII level maps and the order they are played in
-  scene/             Three.js builders and shared assets: textures, themes, tiles, scenery, waterfalls, models, flag
+  scene/             Three.js builders and shared assets: textures, themes, tiles, scenery, waterfalls, heroes, models, flag
   app/               browser state and services: UI store, i18n, input, audio
   components/scene/  Tres components that draw the world
   components/ui/     Vue HUD and menus
